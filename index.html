@@ -53,21 +53,22 @@
       <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white p-4 rounded shadow">
           <p class="text-sm text-gray-500">Total Items</p>
-          <h3 class="text-xl font-bold">124</h3>
+          <h3 id="totalItems" class="text-xl font-bold">0</h3>
         </div>
         <div class="bg-white p-4 rounded shadow">
           <p class="text-sm text-gray-500">Dishes with Recipes</p>
-          <h3 class="text-xl font-bold">2</h3>
+          <h3 id="dishesWithRecipes" class="text-xl font-bold">0</h3>
         </div>
         <div class="bg-white p-4 rounded shadow">
           <p class="text-sm text-gray-500">Low Stock</p>
-          <h3 class="text-xl font-bold">8</h3>
+          <h3 id="lowStockCount" class="text-xl font-bold">0</h3>
         </div>
         <div class="bg-white p-4 rounded shadow">
           <p class="text-sm text-gray-500">Out of Stock</p>
-          <h3 class="text-xl font-bold">2</h3>
+          <h3 id="outOfStockCount" class="text-xl font-bold">0</h3>
         </div>
       </div>
+
 
       <!-- Inventory Table -->
       <div class="bg-white p-4 rounded shadow">
@@ -296,6 +297,39 @@
         tbody.appendChild(tr);
       });
     }
+
+    onValue(inventoryRef, (snapshot) => {
+  items = [];
+  let total = 0;
+  let lowStock = 0;
+  let outOfStock = 0;
+
+  snapshot.forEach((childSnapshot) => {
+    const item = childSnapshot.val();
+    const original = item.originalQuantity || item.quantity;
+
+    items.push(item);
+    total++;
+
+    if (item.quantity === 0) {
+      outOfStock++;
+    } else if (item.quantity <= original * 0.3) {
+      lowStock++;
+    }
+  });
+
+  // 👇 Update counts on the dashboard
+  document.getElementById("totalItems").textContent = total;
+  document.getElementById("lowStockCount").textContent = lowStock;
+  document.getElementById("outOfStockCount").textContent = outOfStock;
+
+  // If you have recipes logic, replace the line below
+  document.getElementById("dishesWithRecipes").textContent = 2;
+
+  // Render the filtered table after counting
+  renderTable();
+});
+
 
 
     renderTable();
