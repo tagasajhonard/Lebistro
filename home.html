@@ -650,39 +650,51 @@
         //             Object.keys(dishes).forEach(dishId => {
         //                 const dish = dishes[dishId];
 
-        //                 // Separate each part
-        //                 const names = dish.ingredients.map(ing => ing.name).join('<br>');
-        //                 const quantities = dish.ingredients.map(ing => ing.quantity).join('<br>');
-        //                 const units = dish.ingredients.map(ing => ing.unit).join('<br>');
-
-        //                 // Create row
+        //                 // Create main row
         //                 const row = document.createElement('tr');
         //                 row.innerHTML = `
-        //   <td class="p-2 align-top">${dish.dishName}</td>
-        //   <td class="p-2 align-top">${names}</td>
-        //   <td class="p-2 align-top">${quantities}</td>
-        //   <td class="p-2 align-top">${units}</td>
-        //   <td class="p-2 align-top">${dish.category}</td>
-        //   <td class="p-2 align-top space-x-2">
+        //   <td class="p-2 font-medium">${dish.dishName}</td>
+
+        //   <td class="p-2">
+        //     <button onclick="toggleIngredients('${dishId}')" class="text-green-600 hover:underline">View</button>  
+        //   </td>
+        //   <td class="p-2">${dish.category}</td>
+        //   <td class="p-2 space-x-2">
+
         //     <button onclick="editDish('${dishId}')" class="text-blue-600 hover:underline">Edit</button>
         //     <button onclick="deleteDish('${dishId}')" class="text-red-600 hover:underline">Delete</button>
         //   </td>
         // `;
         //                 dishTableBody.appendChild(row);
+
+        //                 // Create collapsible row
+        //                 const ingredientRow = document.createElement('tr');
+        //                 ingredientRow.id = `ingredients-${dishId}`;
+        //                 ingredientRow.classList.add('hidden');
+        //                 ingredientRow.innerHTML = `
+        //   <td colspan="3" class="p-3 bg-gray-50 text-sm">
+        //     <strong>Ingredients:</strong>
+        //     <ul class="list-disc list-inside mt-1">
+        //       ${dish.ingredients.map(ing => `<li>${ing.name} — ${ing.quantity} ${ing.unit}</li>`).join('')}
+        //     </ul>
+        //   </td>
+        // `;
+        //                 dishTableBody.appendChild(ingredientRow);
         //             });
 
         //         } else {
-        //             dishTableBody.innerHTML = `<tr><td colspan="6" class="p-2 text-center text-gray-500">No dishes found.</td></tr>`;
+        //             dishTableBody.innerHTML = `<tr><td colspan="3" class="p-2 text-center text-gray-500">No dishes found.</td></tr>`;
         //         }
         //     });
         // }
+
 
         function loadDishes() {
             const dishRef = ref(database, 'Dish');
 
             onValue(dishRef, (snapshot) => {
                 const dishTableBody = document.getElementById("dishTableBody");
-                dishTableBody.innerHTML = ''; // Clear table first
+                dishTableBody.innerHTML = '';
 
                 if (snapshot.exists()) {
                     const dishes = snapshot.val();
@@ -690,13 +702,12 @@
                     Object.keys(dishes).forEach(dishId => {
                         const dish = dishes[dishId];
 
-                        // Create main row
+                        // Top dish row
                         const row = document.createElement('tr');
                         row.innerHTML = `
-          <td class="p-2 font-medium">${dish.dishName}</td>
-         
-          <td class="p-2">
-            <button onclick="toggleIngredients('${dishId}')" class="text-green-600 hover:underline">View</button>  
+          <td class="p-2 font-semibold">${dish.dishName}</td>
+          <td class="p-2 space-x-2">
+            <button onclick="toggleIngredients('${dishId}')" class="text-green-600 hover:underline">View</button>
           </td>
           <td class="p-2">${dish.category}</td>
           <td class="p-2 space-x-2">
@@ -707,26 +718,47 @@
         `;
                         dishTableBody.appendChild(row);
 
-                        // Create collapsible row
+                        // Collapsible ingredient table row (hidden by default)
                         const ingredientRow = document.createElement('tr');
                         ingredientRow.id = `ingredients-${dishId}`;
                         ingredientRow.classList.add('hidden');
                         ingredientRow.innerHTML = `
-          <td colspan="3" class="p-3 bg-gray-50 text-sm">
-            <strong>Ingredients:</strong>
-            <ul class="list-disc list-inside mt-1">
-              ${dish.ingredients.map(ing => `<li>${ing.name} — ${ing.quantity} ${ing.unit}</li>`).join('')}
-            </ul>
+          <td colspan="3" class="p-3 bg-gray-50">
+            <div>
+              <strong class="text-gray-700">Ingredients:</strong>
+              <table class="w-full text-sm mt-2 border">
+                <thead class="bg-gray-200">
+                  <tr>
+                    <th class="text-left p-1 border">Name</th>
+                    <th class="text-left p-1 border">Quantity</th>
+                    <th class="text-left p-1 border">Unit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${dish.ingredients.map(ing => `
+                    <tr>
+                      <td class="p-1 border">${ing.name}</td>
+                      <td class="p-1 border">${ing.quantity}</td>
+                      <td class="p-1 border">${ing.unit}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
           </td>
         `;
                         dishTableBody.appendChild(ingredientRow);
                     });
 
                 } else {
-                    dishTableBody.innerHTML = `<tr><td colspan="3" class="p-2 text-center text-gray-500">No dishes found.</td></tr>`;
+                    dishTableBody.innerHTML = `
+        <tr><td colspan="3" class="p-2 text-center text-gray-500">No dishes found.</td></tr>
+      `;
                 }
             });
         }
+
+
         window.toggleIngredients = function (dishId) {
             const row = document.getElementById(`ingredients-${dishId}`);
             row.classList.toggle('hidden');
