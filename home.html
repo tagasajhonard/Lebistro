@@ -13,7 +13,6 @@
 </head>
 <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
-        // ⛔ Block access
         alert("You must log in first.");
         window.location.href = "index.html";
     }
@@ -112,10 +111,9 @@
         <aside id="mobileSidebar" class="bg-white w-full lg:hidden hidden p-4 space-y-4 shadow-md">
             <!-- sidebar links -->
             <nav class="space-y-3" x-data="{ openSettings: false }">
-                <a href="#" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
+                <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
                 <a href="#" class="block p-2 rounded hover:bg-green-100">Inventory</a>
                 <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
-                <a href="#" class="block p-2 rounded hover:bg-green-100">Settings</a>
 
                 <div>
                     <button @click="openSettings = !openSettings"
@@ -131,17 +129,15 @@
 
                     <div x-data="{ openAddCategory: false }">
                         <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
-                            <a href="#" class="block p-2 rounded hover:bg-green-100 text-sm" onclick="showModal()">Add
-                                Item</a>
-                            <a href="#" onclick="openAddCategoryModal(event)"
-                                class="block p-2 rounded hover:bg-green-100 text-sm">
-                                Add Category
-                            </a>
-                            <a href="#" onclick="showManageUsers()"
-                                class="block p-2 rounded hover:bg-green-100 text-sm">
-                                Manage Users
+                            <a href="#" onclick="showManageUsers()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Manage User
                             </a>
 
+                            <a href="#" onclick="showDishSection()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Manage Dish
+                            </a>
 
                         </div>
                     </div>
@@ -182,12 +178,12 @@
             <div id="inventorySection" class="bg-white p-4 rounded shadow ">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold">Manage Items</h2>
-                    <div class="flex justify-end gap-2">
+                    <div class="flex justify-end gap-2 flex-wrap ml-auto">
                         <button onclick="showModal()"
-                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Add
+                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm whitespace-nowrap">Add
                             Items</button>
                         <button onclick="openAddCategoryModal(event)"
-                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Add
+                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm whitespace-nowrap">Add
                             Category</button>
 
                     </div>
@@ -238,7 +234,7 @@
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold">Manage Users</h2>
                     <button onclick="openAddStaffModal()"
-                        class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">+ Add Staff</button>
+                        class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Add Staff</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-[500px] table-fixed w-full border-collapse">
@@ -259,6 +255,7 @@
                 </div>
             </div>
 
+            <!-- Dish table -->
             <div id="dishSection" class="bg-white p-4 rounded shadow hidden">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold">Manage Dish</h2>
@@ -443,6 +440,8 @@
             document.getElementById("addDishModal").classList.add("hidden");
         }
 
+
+
         function clearDishForm() {
             document.getElementById("dishName").value = "";
             document.getElementById("dishCategory").value = "";
@@ -517,10 +516,7 @@
             document.getElementById("inventorySection").classList.remove("hidden");
         }
 
-        function showDishSection() {
-            hideAllSections();
-            document.getElementById("dishSection").classList.remove("hidden");
-        }
+
 
 
 
@@ -594,6 +590,160 @@
             renderTable();
         });
 
+        // save dish in firebase
+
+        window.saveDish = function () {
+
+
+            const name = document.getElementById("dishName").value;
+            const category = document.getElementById("dishCategory").value;
+            const ingredients = [];
+
+            const ingredientRows = document.querySelectorAll("#ingredientsContainer > div");
+            ingredientRows.forEach(row => {
+                const inputs = row.querySelectorAll("input");
+                const ingredient = {
+                    name: inputs[0].value,
+                    quantity: parseFloat(inputs[1].value),
+                    unit: inputs[2].value
+                };
+                if (ingredient.name && ingredient.quantity && ingredient.unit) {
+                    ingredients.push(ingredient);
+                }
+            });
+
+            if (!name || !category || ingredients.length === 0) {
+                alert("Please fill out all fields.");
+                return;
+            }
+
+            const dishRef = ref(database, 'Dish');
+            const newDishRef = push(dishRef);
+
+            set(newDishRef, {
+                dishName: name,
+                category: category,
+                ingredients: ingredients
+            })
+                .then(() => {
+                    alert("✅ Dish saved successfully!");
+                    closeAddDishModal();
+                })
+                .catch(error => {
+                    console.error("❌ Error saving dish:", error);
+                    alert("Failed to save dish.");
+                });
+        }
+
+        // show Dishes in table
+
+        // function loadDishes() {
+        //     const dishRef = ref(database, 'Dish');
+
+        //     onValue(dishRef, (snapshot) => {
+        //         const dishTableBody = document.getElementById("dishTableBody");
+        //         dishTableBody.innerHTML = ''; // Clear table first
+
+        //         if (snapshot.exists()) {
+        //             const dishes = snapshot.val();
+
+        //             Object.keys(dishes).forEach(dishId => {
+        //                 const dish = dishes[dishId];
+
+        //                 // Separate each part
+        //                 const names = dish.ingredients.map(ing => ing.name).join('<br>');
+        //                 const quantities = dish.ingredients.map(ing => ing.quantity).join('<br>');
+        //                 const units = dish.ingredients.map(ing => ing.unit).join('<br>');
+
+        //                 // Create row
+        //                 const row = document.createElement('tr');
+        //                 row.innerHTML = `
+        //   <td class="p-2 align-top">${dish.dishName}</td>
+        //   <td class="p-2 align-top">${names}</td>
+        //   <td class="p-2 align-top">${quantities}</td>
+        //   <td class="p-2 align-top">${units}</td>
+        //   <td class="p-2 align-top">${dish.category}</td>
+        //   <td class="p-2 align-top space-x-2">
+        //     <button onclick="editDish('${dishId}')" class="text-blue-600 hover:underline">Edit</button>
+        //     <button onclick="deleteDish('${dishId}')" class="text-red-600 hover:underline">Delete</button>
+        //   </td>
+        // `;
+        //                 dishTableBody.appendChild(row);
+        //             });
+
+        //         } else {
+        //             dishTableBody.innerHTML = `<tr><td colspan="6" class="p-2 text-center text-gray-500">No dishes found.</td></tr>`;
+        //         }
+        //     });
+        // }
+
+        function loadDishes() {
+            const dishRef = ref(database, 'Dish');
+
+            onValue(dishRef, (snapshot) => {
+                const dishTableBody = document.getElementById("dishTableBody");
+                dishTableBody.innerHTML = ''; // Clear table first
+
+                if (snapshot.exists()) {
+                    const dishes = snapshot.val();
+
+                    Object.keys(dishes).forEach(dishId => {
+                        const dish = dishes[dishId];
+
+                        // Create main row
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+          <td class="p-2 font-medium">${dish.dishName}</td>
+         
+          <td class="p-2">
+            <button onclick="toggleIngredients('${dishId}')" class="text-green-600 hover:underline">View</button>  
+          </td>
+          <td class="p-2">${dish.category}</td>
+          <td class="p-2 space-x-2">
+            
+            <button onclick="editDish('${dishId}')" class="text-blue-600 hover:underline">Edit</button>
+            <button onclick="deleteDish('${dishId}')" class="text-red-600 hover:underline">Delete</button>
+          </td>
+        `;
+                        dishTableBody.appendChild(row);
+
+                        // Create collapsible row
+                        const ingredientRow = document.createElement('tr');
+                        ingredientRow.id = `ingredients-${dishId}`;
+                        ingredientRow.classList.add('hidden');
+                        ingredientRow.innerHTML = `
+          <td colspan="3" class="p-3 bg-gray-50 text-sm">
+            <strong>Ingredients:</strong>
+            <ul class="list-disc list-inside mt-1">
+              ${dish.ingredients.map(ing => `<li>${ing.name} — ${ing.quantity} ${ing.unit}</li>`).join('')}
+            </ul>
+          </td>
+        `;
+                        dishTableBody.appendChild(ingredientRow);
+                    });
+
+                } else {
+                    dishTableBody.innerHTML = `<tr><td colspan="3" class="p-2 text-center text-gray-500">No dishes found.</td></tr>`;
+                }
+            });
+        }
+        window.toggleIngredients = function (dishId) {
+            const row = document.getElementById(`ingredients-${dishId}`);
+            row.classList.toggle('hidden');
+        };
+
+
+        // function showDishSection() {
+        //     hideAllSections();
+        //     document.getElementById("dishSection").classList.remove("hidden");
+        //     loadDishes();
+        // }
+        window.showDishSection = function () {
+            hideAllSections();
+            document.getElementById("dishSection").classList.remove("hidden");
+            loadDishes();
+        };
+
         // 🧠 Save item
         form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -662,43 +812,6 @@
                 alert("❌ Failed to add staff.");
             });
         });
-
-
-        // add dish to firebase
-
-        function saveDish() {
-            const name = document.getElementById("dishName").value;
-            const category = document.getElementById("dishCategory").value;
-            const ingredients = [];
-
-            const ingredientRows = document.querySelectorAll("#ingredientsContainer > div");
-            ingredientRows.forEach(row => {
-                const inputs = row.querySelectorAll("input");
-                const ingredient = {
-                    name: inputs[0].value,
-                    quantity: parseFloat(inputs[1].value),
-                    unit: inputs[2].value
-                };
-                if (ingredient.name && ingredient.quantity && ingredient.unit) {
-                    ingredients.push(ingredient);
-                }
-            });
-
-            if (!name || !category || ingredients.length === 0) {
-                alert("Please fill out all fields.");
-                return;
-            }
-
-            // 🔥 TODO: Save to Firebase
-            console.log({
-                dishName: name,
-                category: category,
-                ingredients: ingredients
-            });
-
-            // After saving
-            closeAddDishModal();
-        }
 
 
         // show staff into the table
