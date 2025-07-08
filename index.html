@@ -61,11 +61,35 @@
     <!-- Sidebar for mobile -->
     <aside id="mobileSidebar" class="bg-white w-full lg:hidden hidden p-4 space-y-4 shadow-md">
       <!-- sidebar links -->
-      <nav class="space-y-3">
+      <nav class="space-y-3" x-data="{ openSettings: false }">
         <a href="#" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
         <a href="#" class="block p-2 rounded hover:bg-green-100">Inventory</a>
         <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
         <a href="#" class="block p-2 rounded hover:bg-green-100">Settings</a>
+
+        <div>
+          <button @click="openSettings = !openSettings"
+            class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+            <span>Settings</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform transition-transform duration-200"
+              :class="openSettings ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <div x-data="{ openAddCategory: false }">
+            <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+              <a href="#" class="block p-2 rounded hover:bg-green-100 text-sm" onclick="showModal()">Add Item</a>
+              <a href="#" onclick="openAddCategoryModal(event)" class="block p-2 rounded hover:bg-green-100 text-sm">
+                Add Category
+              </a>
+              <a href="#" class="block p-2 rounded hover:bg-green-100 text-sm">
+                Manage User
+              </a>
+
+            </div>
+          </div>
+        </div>
       </nav>
     </aside>
 
