@@ -6,23 +6,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Restaurant Inventory Admin</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/x-icon" href="img/logo.jpg">
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 text-gray-800">
+<body class=" text-gray-800">
 
   <!-- Sidebar -->
   <div class="flex flex-col lg:flex-row min-h-screen">
     <aside class="bg-white shadow-lg p-5 space-y-6 w-full lg:w-64 hidden lg:block">
-      <h1 class="text-2xl font-bold text-green-600">Navigation</h1>
-      <nav class="space-y-3">
+      <h1 class="text-2xl font-bold nav">Navigation</h1>
+      <nav class="space-y-3" x-data="{ openSettings: false }">
         <a href="#" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
         <a href="#" class="block p-2 rounded hover:bg-green-100">Inventory</a>
         <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
-        <a href="#" class="block p-2 rounded hover:bg-green-100">Settings</a>
+
+        <!-- Settings with submenu -->
+        <div>
+          <button @click="openSettings = !openSettings"
+            class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+            <span>Settings</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform transition-transform duration-200"
+              :class="openSettings ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <div x-data="{ openAddCategory: false }">
+            <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+              <a href="#" class="block p-2 rounded hover:bg-green-100 text-sm" onclick="showModal()">Add Item</a>
+              <a href="#" onclick="openAddCategoryModal(event)" class="block p-2 rounded hover:bg-green-100 text-sm">
+                Add Category
+              </a>
+              <a href="#" class="block p-2 rounded hover:bg-green-100 text-sm">
+                Manage User
+              </a>
+
+            </div>
+          </div>
+        </div>
       </nav>
     </aside>
+
+
+
 
     <div class="lg:hidden flex justify-between items-center bg-white px-4 py-3 shadow-md">
       <h1 class="text-xl font-bold text-green-600">Navigation</h1>
@@ -45,8 +74,7 @@
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-6 gap-2">
         <h2 class="text-2xl font-semibold">Inventory Dashboard</h2>
-        <button onclick="showModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Add
-          Item</button>
+
       </div>
 
       <!-- Stats -->
@@ -75,11 +103,6 @@
         <div class="mb-4 flex justify-between items-center">
           <input id="searchInput" type="text" placeholder="Search items..." class="border px-3 py-2 rounded w-1/2" />
           <select id="categoryFilter" class="border px-2 py-2 rounded">
-            <option value="All">All Categories</option>
-            <option value="Vegetables">Vegetables</option>
-            <option value="Meat">Meat</option>
-            <option value="Beverages">Beverages</option>
-
           </select>
         </div>
 
@@ -120,12 +143,35 @@
       <h3 class="text-lg font-bold mb-4">Add New Item</h3>
       <form id="addItemForm">
         <input type="text" id="itemName" placeholder="Item Name" class="w-full mb-2 p-2 border rounded" required />
-        <input type="text" id="category" placeholder="Category" class="w-full mb-2 p-2 border rounded" required />
+        <select id="categoryDropdownInput" class="w-full mb-2 p-2 border rounded" required>
+          <option value="">Select a category</option>
+        </select>
+
         <input type="number" id="quantity" placeholder="Quantity" class="w-full mb-2 p-2 border rounded" required />
         <input type="text" id="unit" placeholder="Unit (e.g., Kg, L)" class="w-full mb-4 p-2 border rounded" required />
         <div class="flex justify-end gap-2">
           <button type="button" onclick="hideModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>
+          <button type="submit" class="button-save  text-white px-4 py-2 rounded">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <!-- Add Category Modal -->
+  <!-- Add Category Modal -->
+  <div id="addCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 class="text-xl font-semibold mb-4">Add Category</h2>
+      <form id="categoryForm">
+        <label class="block mb-2 text-sm font-medium">Category Name</label>
+        <input id="categoryInput" type="text"
+          class="w-full border border-gray-300 rounded p-2 mb-4 focus:outline-none focus:ring focus:border-blue-300"
+          placeholder="Enter category name" />
+        <div class="flex justify-end space-x-2">
+          <button type="button" onclick="closeAddCategoryModal()"
+            class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Save</button>
         </div>
       </form>
     </div>
@@ -140,6 +186,32 @@
     function hideModal() {
       document.getElementById('modal').classList.add('hidden');
     }
+    function toggleSettings() {
+      const submenu = document.getElementById("settingsSubmenu");
+      submenu.classList.toggle("hidden");
+    }
+
+
+    const modal = document.getElementById("addCategoryModal");
+
+    function openAddCategoryModal(event) {
+      event.preventDefault();
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      document.getElementById("categoryInput").value = ""; // clear input
+    }
+
+    function closeAddCategoryModal() {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    // Optional: close modal if user clicks outside the content
+    modal.addEventListener("click", function () {
+      closeAddCategoryModal();
+    });
+
+
 
     document.getElementById('addItemForm').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -148,7 +220,6 @@
   <script type="module">
 
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -216,7 +287,7 @@
       e.preventDefault();
 
       const itemName = document.getElementById('itemName').value.trim();
-      const category = document.getElementById('category').value.trim();
+      const category = document.getElementById('categoryDropdownInput').value;
       const quantity = parseInt(document.getElementById('quantity').value.trim());
       const unit = document.getElementById('unit').value.trim();
 
@@ -299,38 +370,139 @@
     }
 
     onValue(inventoryRef, (snapshot) => {
-  items = [];
-  let total = 0;
-  let lowStock = 0;
-  let outOfStock = 0;
+      items = [];
+      let total = 0;
+      let lowStock = 0;
+      let outOfStock = 0;
 
-  snapshot.forEach((childSnapshot) => {
-    const item = childSnapshot.val();
-    const original = item.originalQuantity || item.quantity;
+      snapshot.forEach((childSnapshot) => {
+        const item = childSnapshot.val();
+        const original = item.originalQuantity || item.quantity;
 
-    items.push(item);
-    total++;
+        items.push(item);
+        total++;
 
-    if (item.quantity === 0) {
-      outOfStock++;
-    } else if (item.quantity <= original * 0.3) {
-      lowStock++;
+        if (item.quantity === 0) {
+          outOfStock++;
+        } else if (item.quantity <= original * 0.3) {
+          lowStock++;
+        }
+      });
+
+      // 👇 Update counts on the dashboard
+      document.getElementById("totalItems").textContent = total;
+      document.getElementById("lowStockCount").textContent = lowStock;
+      document.getElementById("outOfStockCount").textContent = outOfStock;
+
+      // If you have recipes logic, replace the line below
+      document.getElementById("dishesWithRecipes").textContent = 5;
+
+      // Render the filtered table after counting
+      renderTable();
+    });
+
+    const Categoryform = document.getElementById("categoryForm");
+
+    Categoryform.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const categoryName = document.getElementById("categoryInput").value.trim();
+
+      if (!categoryName) {
+        alert("Please enter a category name.");
+        return;
+      }
+
+      const categoryListRef = ref(database, "Category");
+      const newCategoryRef = push(categoryListRef);
+
+      set(newCategoryRef, { name: categoryName })
+        .then(() => {
+          alert("✅ Category saved successfully!");
+          Categoryform.reset();
+          closeAddCategoryModal();
+        })
+        .catch((err) => {
+          console.error("Error saving category:", err);
+          alert("❌ Failed to save category.");
+        });
+    });
+
+
+    function closeAddCategoryModal() {
+      const modal = document.getElementById("addCategoryModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function openAddCategoryModal(event) {
+      event.preventDefault();
+      const modal = document.getElementById("addCategoryModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      document.getElementById("categoryInput").value = "";
+    }
+
+    const categoryDropdowns = document.getElementById("categoryDropdownInput");
+
+    // function loadCategories() {
+    //   const categoryRef = ref(database, "Category");
+
+    //   onValue(categoryRef, (snapshot) => {
+    //     const data = snapshot.val();
+
+    //     // Clear previous options
+    //     categoryDropdowns.innerHTML = '<option value="">Select a category</option>';
+
+    //     if (data) {
+    //       Object.entries(data).forEach(([key, value]) => {
+    //         const option = document.createElement("option");
+    //         option.value = value.name;
+    //         option.textContent = value.name;
+    //         categoryDropdowns.appendChild(option);
+    //       });
+    //     }
+    //   });
+    // }
+
+    function loadCategories() {
+  const categoryRef = ref(database, "Category");
+
+  onValue(categoryRef, (snapshot) => {
+    const data = snapshot.val();
+
+    // Get both dropdown elements
+    const modalDropdown = document.getElementById("categoryDropdownInput");
+    const filterDropdown = document.getElementById("categoryFilter");
+
+    // Clear previous options
+    modalDropdown.innerHTML = '<option value="">Select a category</option>';
+    filterDropdown.innerHTML = '<option value="All">All Categories</option>';
+
+    if (data) {
+      Object.entries(data).forEach(([key, value]) => {
+        const option1 = document.createElement("option");
+        option1.value = value.name;
+        option1.textContent = value.name;
+        modalDropdown.appendChild(option1);
+
+        const option2 = document.createElement("option");
+        option2.value = value.name;
+        option2.textContent = value.name;
+        filterDropdown.appendChild(option2);
+      });
     }
   });
-
-  // 👇 Update counts on the dashboard
-  document.getElementById("totalItems").textContent = total;
-  document.getElementById("lowStockCount").textContent = lowStock;
-  document.getElementById("outOfStockCount").textContent = outOfStock;
-
-  // If you have recipes logic, replace the line below
-  document.getElementById("dishesWithRecipes").textContent = 2;
-
-  // Render the filtered table after counting
-  renderTable();
-});
+}
 
 
+    function showModal() {
+      const modal = document.getElementById("modal");
+      modal.classList.remove("hidden");
+      loadCategories(); // Load categories when modal opens
+    }
+
+    loadCategories(); // At the bottom of your script
 
     renderTable();
 
