@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Restaurant Inventory Admin</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/x-icon" href="img/logo.jpg">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+        // ⛔ Block access
+        alert("You must log in first.");
+        window.location.href = "index.html";
+    }
+</script>
+<script>
+  console.log("Stored role:", localStorage.getItem("userRole"));
+</script>
+ <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      const role = localStorage.getItem("userRole");
+
+      if (role !== "Admin") {
+        // Hide all admin-only elements
+        const adminOnlyElements = document.querySelectorAll('[data-role="admin-only"]');
+        adminOnlyElements.forEach(el => el.classList.add("hidden"));
+
+        // Optionally: remove the Manage Users section
+        const manageUserSection = document.getElementById("manageUserSection");
+        if (manageUserSection) {
+          manageUserSection.remove();
+        }
+      }
+    }); // Wait a bit to ensure Alpine has rendered
+  });
+</script>
+
+<body class=" text-gray-800">
+
+    <!-- Sidebar -->
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        <aside class="bg-white shadow-lg p-5 space-y-6 w-full lg:w-64 hidden lg:block">
+            <h1 class="text-2xl font-bold nav">Navigation</h1>
+            <nav class="space-y-3" x-data="{ openSettings: false }">
+                <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
+                <a href="#" class="block p-2 rounded hover:bg-green-100">Inventory</a>
+                <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
+
+                <!-- Settings with submenu -->
+                <div data-role="admin-only">
+                    <button @click="openSettings = !openSettings"
+                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+                        <span>Settings</span>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transform transition-transform duration-200"
+                            :class="openSettings ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div x-data="{ openAddCategory: false }">
+                        <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+                            <a href="#" class="block p-2 rounded hover:bg-green-100 text-sm" onclick="showModal()">Add
+                                Item</a>
+                            <a href="#" onclick="openAddCategoryModal(event)"
+                                class="block p-2 rounded hover:bg-green-100 text-sm">
+                                Add Category
+                            </a>
+                            <a href="#" onclick="showManageUsers()"
+                                class="block p-2 rounded hover:bg-green-100 text-sm">
+                                Manage User
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
+                <!-- Logout Button -->
+
+                <a onclick="logout()" class="block p-2 rounded hover:bg-green-100 cursor-pointer">
+                    Logout
+                </a>
+            </nav>
+        </aside>
+
+
+        <!-- Logout Confirmation Modal -->
+        <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
+                <p class="mb-6">Are you sure you want to logout?</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="confirmLogout()"
+                        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Yes</button>
+                    <button onclick="closeLogoutModal()"
+                        class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="lg:hidden flex justify-between items-center bg-white px-4 py-3 shadow-md">
+            <h1 class="text-xl font-bold text-green-600">Navigation</h1>
+            <button onclick="toggleSidebar()" class="text-gray-700 text-2xl">&#9776;</button>
+        </div>
+
+        <!-- Sidebar for mobile -->
+        <aside id="mobileSidebar" class="bg-white w-full lg:hidden hidden p-4 space-y-4 shadow-md">
+            <!-- sidebar links -->
+            <nav class="space-y-3" x-data="{ openSettings: false }">
+                <a href="#" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
+                <a href="#" class="block p-2 rounded hover:bg-green-100">Inventory</a>
+                <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
+                <a href="#" class="block p-2 rounded hover:bg-green-100">Settings</a>
+
+                <div>
+                    <button @click="openSettings = !openSettings"
+                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+                        <span>Settings</span>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transform transition-transform duration-200"
+                            :class="openSettings ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div x-data="{ openAddCategory: false }">
+                        <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+                            <a href="#" class="block p-2 rounded hover:bg-green-100 text-sm" onclick="showModal()">Add
+                                Item</a>
+                            <a href="#" onclick="openAddCategoryModal(event)"
+                                class="block p-2 rounded hover:bg-green-100 text-sm">
+                                Add Category
+                            </a>
+                            <a href="#" onclick="showManageUsers()"
+                                class="block p-2 rounded hover:bg-green-100 text-sm">
+                                Manage Users
+                            </a>
+
+
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6">
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-6 gap-2">
+                <h2 class="text-2xl font-semibold">Inventory Dashboard</h2>
+
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-500">Total Items</p>
+                    <h3 id="totalItems" class="text-xl font-bold">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-500">Dishes with Recipes</p>
+                    <h3 id="dishesWithRecipes" class="text-xl font-bold">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-500">Low Stock</p>
+                    <h3 id="lowStockCount" class="text-xl font-bold">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-500">Out of Stock</p>
+                    <h3 id="outOfStockCount" class="text-xl font-bold">0</h3>
+                </div>
+            </div>
+
+
+            <!-- Inventory Table -->
+            <div id="inventorySection" class="bg-white p-4 rounded shadow ">
+                <div class="mb-4 flex justify-between items-center">
+                    <input id="searchInput" type="text" placeholder="Search items..."
+                        class="border px-3 py-2 rounded w-1/2" />
+                    <select id="categoryFilter" class="border px-2 py-2 rounded">
+                    </select>
+                </div>
+
+                <!-- Tabs -->
+                <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
+                    <button class="tab-button active-tab" onclick="filterInventory('all', this)"
+                        data-filter="all">All</button>
+                    <button class="tab-button " onclick="filterInventory('low', this)" data-filter="low">Low
+                        Stock</button>
+                    <button class="tab-button " onclick="filterInventory('out', this)" data-filter="out">Out of
+                        Stock</button>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-[600px] table-fixed w-full border-collapse">
+                        <thead class="bg-green-100 text-left">
+                            <tr>
+                                <th class="p-2">Item Name</th>
+                                <th class="p-2">Category</th>
+                                <th class="p-2">Quantity</th>
+                                <th class="p-2">Unit</th>
+                                <th class="p-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody">
+                            <!-- Items from Firebase will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- MANAGE USER TABLE (initially hidden) -->
+            <div id="manageUserSection" class="bg-white p-4 rounded shadow hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Manage Users</h2>
+                    <button onclick="openAddStaffModal()"
+                        class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">+ Add Staff</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-[500px] table-fixed w-full border-collapse">
+                        <thead class="bg-gray-100 text-left">
+                            <tr>
+                                <th class="p-2">Name</th>
+                                <th class="p-2">Email</th>
+                                <th class="p-2">Role</th>
+                                <th class="p-2">Status</th>
+                                <th class="p-2">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="userTableBody">
+                            <!-- Users will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <!-- Add Item Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 px-4">
+        <div class="bg-white p-6 rounded shadow w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4">Add New Item</h3>
+            <form id="addItemForm">
+                <input type="text" id="itemName" placeholder="Item Name" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <select id="categoryDropdownInput" class="w-full mb-2 p-2 border rounded" required>
+                    <option value="">Select a category</option>
+                </select>
+
+                <input type="number" id="quantity" placeholder="Quantity" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <input type="text" id="unit" placeholder="Unit (e.g., Kg, L)" class="w-full mb-4 p-2 border rounded"
+                    required />
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="hideModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button type="submit" class="button-save  text-white px-4 py-2 rounded">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <!-- Add Category Modal -->
+    <!-- Add Category Modal -->
+    <div id="addCategoryModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 px-4">
+        <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-xl font-semibold mb-4">Add Category</h2>
+            <form id="categoryForm">
+                <label class="block mb-2 text-sm font-medium">Category Name</label>
+                <input id="categoryInput" type="text"
+                    class="w-full border border-gray-300 rounded p-2 mb-4 focus:outline-none focus:ring focus:border-blue-300"
+                    placeholder="Enter category name" />
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeAddCategoryModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Add Staff Modal -->
+
+    <!-- Add Staff Modal -->
+    <div id="addStaffModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white w-full max-w-md p-6 rounded shadow">
+            <h3 class="text-lg font-bold mb-4">Add New Staff</h3>
+            <form id="addStaffForm">
+                <input type="text" id="staffName" placeholder="Full Name" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <input type="email" id="staffEmail" placeholder="Email" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <input type="text" id="staffPass" placeholder="Password" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <input type="text" id="staffContact" placeholder="Contact Number" class="w-full mb-2 p-2 border rounded"
+                    required />
+
+                <select id="staffRole" class="w-full mb-4 p-2 border rounded" required>
+                    <option value="">Select Role</option>
+                    <option value="Staff">Staff</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Admin">Admin</option>
+                </select>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeAddStaffModal()"
+                        class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button type="submit"
+                        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+    <script>
+        function showModal() {
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function hideModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+        function toggleSettings() {
+            const submenu = document.getElementById("settingsSubmenu");
+            submenu.classList.toggle("hidden");
+        }
+
+        function openAddStaffModal() {
+            document.getElementById("addStaffModal").classList.remove("hidden");
+            document.getElementById("addStaffModal").classList.add("flex");
+        }
+
+        function closeAddStaffModal() {
+            document.getElementById("addStaffModal").classList.add("hidden");
+            document.getElementById("addStaffModal").classList.remove("flex");
+        }
+
+        function logout() {
+            document.getElementById('logoutModal').classList.remove('hidden');
+        }
+
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.add('hidden');
+        }
+
+        function confirmLogout() {
+            // 1. Hide the modal
+            document.getElementById("logoutModal").classList.add("hidden");
+
+            // 2. Clear session data if any (optional)
+            localStorage.removeItem("isLoggedIn");
+
+            // 3. Redirect to login page
+            window.location.href = "index.html"; // adjust path if needed
+        }
+
+
+
+        const modal = document.getElementById("addCategoryModal");
+
+        function openAddCategoryModal(event) {
+            event.preventDefault();
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            document.getElementById("categoryInput").value = ""; // clear input
+        }
+
+        function closeAddCategoryModal() {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        // Optional: close modal if user clicks outside the content
+        modal.addEventListener("click", function () {
+            closeAddCategoryModal();
+        });
+
+
+        // function for staff table showing
+
+
+
+        function showInventory() {
+            document.getElementById("inventorySection").classList.remove("hidden");
+            document.getElementById("manageUserSection").classList.add("hidden");
+        }
+
+
+
+
+
+
+        document.getElementById('addItemForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+        });
+    </script>
+    <script type="module">
+
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAirT0VzOc7Bzcsj3oV5_9PQS8f990uzwo",
+            authDomain: "lebistro-9be16.firebaseapp.com",
+            projectId: "lebistro-9be16",
+            storageBucket: "lebistro-9be16.firebasestorage.app",
+            messagingSenderId: "115040507366",
+            appId: "1:115040507366:web:3281b19470f482cff0f227"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const database = getDatabase(app);
+
+        signInAnonymously(auth)
+            .then(() => {
+                console.log("Signed in anonymously ✅");
+                // Now you can read/write from the database
+            })
+            .catch((error) => {
+                console.error("Anonymous sign-in error:", error);
+            });
+
+        const form = document.getElementById('addItemForm');
+        const inventoryRef = ref(database, "Inventory");
+        const tbody = document.getElementById("inventoryBody");
+        const categoryDropdown = document.getElementById("categoryFilter");
+        const searchInput = document.getElementById("searchInput");
+        const tabButtons = document.querySelectorAll(".tab-button");
+
+        let currentFilter = "all";
+        let currentCategory = "All";
+        let currentSearch = "";
+        let items = []; // Store fetched items
+
+        // 🔁 Listen for tab click
+        tabButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                currentFilter = btn.dataset.filter;
+                tabButtons.forEach((b) => b.classList.remove("active-tab"));
+                btn.classList.add("active-tab");
+                renderTable(); // Apply all filters
+            });
+        });
+
+        // 🔁 Listen to category dropdown
+        categoryDropdown.addEventListener("change", () => {
+            currentCategory = categoryDropdown.value;
+            renderTable();
+        });
+
+        // 🔁 Search input listener
+        searchInput.addEventListener("input", () => {
+            currentSearch = searchInput.value.toLowerCase();
+            renderTable();
+        });
+
+        // 🧠 Save item
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const itemName = document.getElementById('itemName').value.trim();
+            const category = document.getElementById('categoryDropdownInput').value;
+            const quantity = parseInt(document.getElementById('quantity').value.trim());
+            const unit = document.getElementById('unit').value.trim();
+
+            if (!itemName || !category || !quantity || !unit) return alert('All fields are required!');
+
+            const newItemRef = push(inventoryRef);
+
+            set(newItemRef, {
+                itemName,
+                category,
+                quantity,
+                originalQuantity: quantity,
+                unit
+            }).then(() => {
+                alert('✅ Item saved successfully!');
+                form.reset();
+                hideModal();
+            }).catch(err => {
+                console.error('Error saving data:', err);
+                alert('Failed to save item.');
+            });
+        });
+
+        // function loadUsers() {
+        //   const usersRef = ref(database, "Users"); // Assuming your node is 'Users'
+        //   const tbody = document.getElementById("userTableBody");
+        //   tbody.innerHTML = "";
+
+        //   onValue(usersRef, (snapshot) => {
+        //     tbody.innerHTML = ""; // clear existing
+        //     snapshot.forEach((child) => {
+        //       const user = child.val();
+        //       const tr = document.createElement("tr");
+        //       tr.innerHTML = `
+        //     <td class="p-2">${user.name || '-'}</td>
+        //     <td class="p-2">${user.email || '-'}</td>
+        //     <td class="p-2">${user.role || 'staff'}</td>
+        //     <td class="p-2">${user.status || 'active'}</td>
+        //     <td class="p-2">
+        //       <button class="text-blue-600 hover:underline">Edit</button>
+        //       <button class="text-red-600 hover:underline">Disable</button>
+        //     </td>
+        //   `;
+        //       tbody.appendChild(tr);
+        //     });
+        //   });
+        // }
+
+
+        // adding staff into firebase
+
+        const staffForm = document.getElementById("addStaffForm");
+
+        staffForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById("staffName").value.trim();
+            const email = document.getElementById("staffEmail").value.trim();
+            const pass = document.getElementById("staffPass").value.trim();
+            const contact = document.getElementById("staffContact").value.trim();
+            const role = document.getElementById("staffRole").value;
+
+            if (!name || !email || !pass || !contact || !role) {
+                alert("Please fill out all fields.");
+                return;
+            }
+
+            const staffRef = ref(database, "Staff");
+            const newStaffRef = push(staffRef);
+
+            set(newStaffRef, {
+                name,
+                pass,
+                email,
+                contact,
+                role,
+                status: "Active" // Default
+            }).then(() => {
+                alert("✅ Staff added successfully!");
+                staffForm.reset();
+                closeAddStaffModal();
+                loadUsers(); // Refresh table
+            }).catch((error) => {
+                console.error("Error adding staff:", error);
+                alert("❌ Failed to add staff.");
+            });
+        });
+
+
+
+        // show staff into the table
+        function loadUsers() {
+            const staffRef = ref(database, "Staff");
+
+            onValue(staffRef, (snapshot) => {
+                const userTableBody = document.getElementById("userTableBody");
+                userTableBody.innerHTML = ""; // Clear previous rows
+
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const staff = childSnapshot.val();
+                        const staffKey = childSnapshot.key;
+
+                        const row = document.createElement("tr");
+
+                        row.innerHTML = `
+          <td class="p-2">${staff.name}</td>
+          <td title="${staff.email}" class="truncate max-w-[100px]">${staff.email}</td>
+          <td class="p-2">${staff.role}</td>
+          <td class="p-2">${staff.status || "Active"}</td>
+          <td class="p-2">
+            <button class="text-blue-600 hover:underline" onclick="editStaff('${staffKey}')">Edit</button>
+            <button class="text-red-600 hover:underline" onclick="deleteStaff('${staffKey}')">Delete</button>
+          </td>
+        `;
+
+                        userTableBody.appendChild(row);
+                    });
+                } else {
+                    userTableBody.innerHTML = `
+        <tr><td colspan="5" class="text-center py-4 text-gray-500">No staff found.</td></tr>
+      `;
+                }
+            });
+        }
+
+        function showManageUsers() {
+            console.log("Show manage user clicked");
+            document.getElementById("inventorySection").classList.add("hidden");
+            document.getElementById("manageUserSection").classList.remove("hidden");
+            loadUsers();
+        }
+
+
+
+        // 🔁 Load data ONCE and keep in memory
+        onValue(inventoryRef, (snapshot) => {
+            items = [];
+            snapshot.forEach((childSnapshot) => {
+                items.push(childSnapshot.val());
+            });
+            renderTable(); // Initial render
+        });
+
+        // 📋 Render with all filters applied
+        function renderTable() {
+            tbody.innerHTML = "";
+
+            items.forEach((item) => {
+                const original = item.originalQuantity || item.quantity;
+                const isLowStock = item.quantity > 0 && item.quantity <= original * 0.3;
+                const isOutOfStock = item.quantity === 0;
+
+                // 🔎 Filtering logic
+                const matchesTab = (
+                    currentFilter === "all" ||
+                    (currentFilter === "low" && isLowStock) ||
+                    (currentFilter === "out" && isOutOfStock)
+                );
+
+                const matchesCategory =
+                    currentCategory === "All" || item.category === currentCategory;
+
+                const matchesSearch = item.itemName.toLowerCase().includes(currentSearch);
+
+                if (!(matchesTab && matchesCategory && matchesSearch)) return;
+
+                // 🏷️ Badge
+                let stockLabel = "";
+                if (isOutOfStock) {
+                    stockLabel = `<span class="text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded-full">Out of Stock</span>`;
+                } else if (isLowStock) {
+                    stockLabel = `<span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">Low Stock</span>`;
+                }
+
+                // ➕ Create row
+                const tr = document.createElement("tr");
+                tr.classList.add("border-b");
+
+                tr.innerHTML = `
+      <td class="p-2">${item.itemName}</td>
+      <td class="p-2">${item.category}</td>
+      <td class="p-2">${item.quantity} ${stockLabel}</td>
+      <td class="p-2">${item.unit}</td>
+      <td class="p-2">
+        <button class="text-blue-600 hover:underline">Edit</button>
+        <button class="text-red-600 hover:underline">Delete</button>
+      </td>
+    `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        onValue(inventoryRef, (snapshot) => {
+            items = [];
+            let total = 0;
+            let lowStock = 0;
+            let outOfStock = 0;
+
+            snapshot.forEach((childSnapshot) => {
+                const item = childSnapshot.val();
+                const original = item.originalQuantity || item.quantity;
+
+                items.push(item);
+                total++;
+
+                if (item.quantity === 0) {
+                    outOfStock++;
+                } else if (item.quantity <= original * 0.3) {
+                    lowStock++;
+                }
+            });
+
+            // 👇 Update counts on the dashboard
+            document.getElementById("totalItems").textContent = total;
+            document.getElementById("lowStockCount").textContent = lowStock;
+            document.getElementById("outOfStockCount").textContent = outOfStock;
+
+            // If you have recipes logic, replace the line below
+            document.getElementById("dishesWithRecipes").textContent = 5;
+
+            // Render the filtered table after counting
+            renderTable();
+        });
+
+        const Categoryform = document.getElementById("categoryForm");
+
+        Categoryform.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const categoryName = document.getElementById("categoryInput").value.trim();
+
+            if (!categoryName) {
+                alert("Please enter a category name.");
+                return;
+            }
+
+            const categoryListRef = ref(database, "Category");
+            const newCategoryRef = push(categoryListRef);
+
+            set(newCategoryRef, { name: categoryName })
+                .then(() => {
+                    alert("✅ Category saved successfully!");
+                    Categoryform.reset();
+                    closeAddCategoryModal();
+                })
+                .catch((err) => {
+                    console.error("Error saving category:", err);
+                    alert("❌ Failed to save category.");
+                });
+        });
+
+
+        function closeAddCategoryModal() {
+            const modal = document.getElementById("addCategoryModal");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        function openAddCategoryModal(event) {
+            event.preventDefault();
+            const modal = document.getElementById("addCategoryModal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            document.getElementById("categoryInput").value = "";
+        }
+
+        const categoryDropdowns = document.getElementById("categoryDropdownInput");
+
+        function loadCategories() {
+            const categoryRef = ref(database, "Category");
+
+            onValue(categoryRef, (snapshot) => {
+                const data = snapshot.val();
+
+                // Get both dropdown elements
+                const modalDropdown = document.getElementById("categoryDropdownInput");
+                const filterDropdown = document.getElementById("categoryFilter");
+
+                // Clear previous options
+                modalDropdown.innerHTML = '<option value="">Select a category</option>';
+                filterDropdown.innerHTML = '<option value="All">All Categories</option>';
+
+                if (data) {
+                    Object.entries(data).forEach(([key, value]) => {
+                        const option1 = document.createElement("option");
+                        option1.value = value.name;
+                        option1.textContent = value.name;
+                        modalDropdown.appendChild(option1);
+
+                        const option2 = document.createElement("option");
+                        option2.value = value.name;
+                        option2.textContent = value.name;
+                        filterDropdown.appendChild(option2);
+                    });
+                }
+            });
+        }
+
+
+        function showModal() {
+            const modal = document.getElementById("modal");
+            modal.classList.remove("hidden");
+            loadCategories(); // Load categories when modal opens
+        }
+
+
+        loadCategories();
+        renderTable();
+
+        window.showManageUsers = showManageUsers;
+        window.loadUsers = loadUsers;
+
+
+    </script>
+
+
+
+</body>
+<script src="js/tab.js"></script>
+
+</html>

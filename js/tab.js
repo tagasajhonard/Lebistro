@@ -26,3 +26,5 @@ function toggleSidebar() {
     const sidebar = document.getElementById('mobileSidebar');
     sidebar.classList.toggle('hidden');
   }
+
+
