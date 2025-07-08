@@ -19,26 +19,26 @@
     }
 </script>
 <script>
-  console.log("Stored role:", localStorage.getItem("userRole"));
+    console.log("Stored role:", localStorage.getItem("userRole"));
 </script>
- <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(() => {
-      const role = localStorage.getItem("userRole");
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(() => {
+            const role = localStorage.getItem("userRole");
 
-      if (role !== "Admin") {
-        // Hide all admin-only elements
-        const adminOnlyElements = document.querySelectorAll('[data-role="admin-only"]');
-        adminOnlyElements.forEach(el => el.classList.add("hidden"));
+            if (role !== "Admin") {
+                // Hide all admin-only elements
+                const adminOnlyElements = document.querySelectorAll('[data-role="admin-only"]');
+                adminOnlyElements.forEach(el => el.classList.add("hidden"));
 
-        // Optionally: remove the Manage Users section
-        const manageUserSection = document.getElementById("manageUserSection");
-        if (manageUserSection) {
-          manageUserSection.remove();
-        }
-      }
-    }); // Wait a bit to ensure Alpine has rendered
-  });
+                // Optionally: remove the Manage Users section
+                const manageUserSection = document.getElementById("manageUserSection");
+                if (manageUserSection) {
+                    manageUserSection.remove();
+                }
+            }
+        }); // Wait a bit to ensure Alpine has rendered
+    });
 </script>
 
 <body class=" text-gray-800">
@@ -53,7 +53,7 @@
                 <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
 
                 <!-- Settings with submenu -->
-                <div data-role="admin-only">
+                <div>
                     <button @click="openSettings = !openSettings"
                         class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
                         <span>Settings</span>
@@ -67,15 +67,14 @@
 
                     <div x-data="{ openAddCategory: false }">
                         <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
-                            <a href="#" class="block p-2 rounded hover:bg-green-100 text-sm" onclick="showModal()">Add
-                                Item</a>
-                            <a href="#" onclick="openAddCategoryModal(event)"
-                                class="block p-2 rounded hover:bg-green-100 text-sm">
-                                Add Category
-                            </a>
-                            <a href="#" onclick="showManageUsers()"
-                                class="block p-2 rounded hover:bg-green-100 text-sm">
+                            <a href="#" onclick="showManageUsers()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
                                 Manage User
+                            </a>
+
+                            <a href="#" onclick="showDishSection()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Manage Dish
                             </a>
 
                         </div>
@@ -103,7 +102,6 @@
                 </div>
             </div>
         </div>
-
 
         <div class="lg:hidden flex justify-between items-center bg-white px-4 py-3 shadow-md">
             <h1 class="text-xl font-bold text-green-600">Navigation</h1>
@@ -182,6 +180,19 @@
 
             <!-- Inventory Table -->
             <div id="inventorySection" class="bg-white p-4 rounded shadow ">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Manage Items</h2>
+                    <div class="flex justify-end gap-2">
+                        <button onclick="showModal()"
+                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Add
+                            Items</button>
+                        <button onclick="openAddCategoryModal(event)"
+                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Add
+                            Category</button>
+
+                    </div>
+
+                </div>
                 <div class="mb-4 flex justify-between items-center">
                     <input id="searchInput" type="text" placeholder="Search items..."
                         class="border px-3 py-2 rounded w-1/2" />
@@ -191,15 +202,18 @@
 
                 <!-- Tabs -->
                 <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
+
                     <button class="tab-button active-tab" onclick="filterInventory('all', this)"
                         data-filter="all">All</button>
                     <button class="tab-button " onclick="filterInventory('low', this)" data-filter="low">Low
                         Stock</button>
                     <button class="tab-button " onclick="filterInventory('out', this)" data-filter="out">Out of
                         Stock</button>
+
                 </div>
 
                 <!-- Table -->
+
                 <div class="overflow-x-auto">
                     <table class="min-w-[600px] table-fixed w-full border-collapse">
                         <thead class="bg-green-100 text-left">
@@ -244,6 +258,32 @@
                     </table>
                 </div>
             </div>
+
+            <div id="dishSection" class="bg-white p-4 rounded shadow hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Manage Dish</h2>
+                    <button onclick="openAddDishModal()"
+                        class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Add Dish</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-[500px] table-fixed w-full border-collapse">
+                        <thead class="bg-gray-100 text-left">
+                            <tr>
+                                <th class="p-2">Dish Name</th>
+                                <th class="p-2">Ingredients</th>
+                                <th class="p-2">Category</th>
+                                <th class="p-2">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="dishTableBody">
+                            <!-- Users will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
         </main>
     </div>
 
@@ -273,7 +313,6 @@
 
     <!-- Modal -->
     <!-- Add Category Modal -->
-    <!-- Add Category Modal -->
     <div id="addCategoryModal"
         class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 px-4">
         <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-lg shadow-lg w-96">
@@ -292,9 +331,6 @@
             </form>
         </div>
     </div>
-
-
-    <!-- Add Staff Modal -->
 
     <!-- Add Staff Modal -->
     <div id="addStaffModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
@@ -327,6 +363,49 @@
         </div>
     </div>
 
+    <!-- Add Dish Modal -->
+    <div id="addDishModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-white p-6 rounded shadow-md w-full max-w-xl">
+            <h2 class="text-xl font-semibold mb-4">Add New Dish</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="dishName" class="block text-sm font-medium text-gray-700">Dish Name</label>
+                    <input type="text" id="dishName" class="w-full border px-3 py-2 rounded"
+                        placeholder="e.g., Spaghetti">
+                </div>
+
+                <div>
+                    <label for="dishCategory" class="block text-sm font-medium text-gray-700">Category</label>
+                    <select id="dishCategory" class="w-full border px-3 py-2 rounded">
+                        <option value="">Select category</option>
+                        <option value="Main Dish">Main Dish</option>
+                        <option value="Drink">Drink</option>
+                        <option value="Snack">Snack</option>
+                    </select>
+                </div>
+
+                <!-- Ingredients List -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ingredients</label>
+                    <div id="ingredientsContainer" class="space-y-2">
+                        <!-- Dynamic ingredient inputs will be added here -->
+                    </div>
+                    <button type="button" onclick="addIngredientInput()" class="text-blue-600 mt-2">+ Add
+                        Ingredient</button>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex justify-end mt-6 gap-3">
+                <button onclick="closeAddDishModal()" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+                <button onclick="saveDish()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save
+                    Dish</button>
+            </div>
+        </div>
+    </div>
+
+
 
 
     <script>
@@ -352,14 +431,46 @@
             document.getElementById("addStaffModal").classList.remove("flex");
         }
 
-        function logout() {
-            document.getElementById('logoutModal').classList.remove('hidden');
+
+        // function for dish Modal
+        function openAddDishModal() {
+            document.getElementById("addDishModal").classList.remove("hidden");
+            clearDishForm();
+            addIngredientInput(); // Add at least one input by default
         }
+
+        function closeAddDishModal() {
+            document.getElementById("addDishModal").classList.add("hidden");
+        }
+
+        function clearDishForm() {
+            document.getElementById("dishName").value = "";
+            document.getElementById("dishCategory").value = "";
+            document.getElementById("ingredientsContainer").innerHTML = "";
+        }
+
+        function addIngredientInput() {
+            const container = document.getElementById("ingredientsContainer");
+            const ingredientId = `ingredient-${Date.now()}`; // unique ID
+
+            const ingredientRow = document.createElement("div");
+            ingredientRow.classList.add("flex", "gap-2");
+            ingredientRow.innerHTML = `
+                <input type="text" class="w-2/5 border px-2 py-1 rounded" placeholder="Ingredient Name">
+                <input type="number" class="w-1/5 border px-2 py-1 rounded" placeholder="Qty">
+                <input type="text" class="w-1/5 border px-2 py-1 rounded" placeholder="Unit">
+                <button type="button" onclick="this.parentElement.remove()" class="text-red-600">✖</button>
+            `;
+            container.appendChild(ingredientRow);
+        }
+
 
         function closeLogoutModal() {
             document.getElementById('logoutModal').classList.add('hidden');
         }
-
+        function logout() {
+            document.getElementById('logoutModal').classList.remove('hidden');
+        }
         function confirmLogout() {
             // 1. Hide the modal
             document.getElementById("logoutModal").classList.add("hidden");
@@ -395,14 +506,21 @@
 
         // function for staff table showing
 
-
-
-        function showInventory() {
-            document.getElementById("inventorySection").classList.remove("hidden");
+        function hideAllSections() {
+            document.getElementById("inventorySection").classList.add("hidden");
+            document.getElementById("dishSection").classList.add("hidden");
             document.getElementById("manageUserSection").classList.add("hidden");
         }
 
+        function showInventory() {
+            hideAllSections();
+            document.getElementById("inventorySection").classList.remove("hidden");
+        }
 
+        function showDishSection() {
+            hideAllSections();
+            document.getElementById("dishSection").classList.remove("hidden");
+        }
 
 
 
@@ -505,31 +623,6 @@
             });
         });
 
-        // function loadUsers() {
-        //   const usersRef = ref(database, "Users"); // Assuming your node is 'Users'
-        //   const tbody = document.getElementById("userTableBody");
-        //   tbody.innerHTML = "";
-
-        //   onValue(usersRef, (snapshot) => {
-        //     tbody.innerHTML = ""; // clear existing
-        //     snapshot.forEach((child) => {
-        //       const user = child.val();
-        //       const tr = document.createElement("tr");
-        //       tr.innerHTML = `
-        //     <td class="p-2">${user.name || '-'}</td>
-        //     <td class="p-2">${user.email || '-'}</td>
-        //     <td class="p-2">${user.role || 'staff'}</td>
-        //     <td class="p-2">${user.status || 'active'}</td>
-        //     <td class="p-2">
-        //       <button class="text-blue-600 hover:underline">Edit</button>
-        //       <button class="text-red-600 hover:underline">Disable</button>
-        //     </td>
-        //   `;
-        //       tbody.appendChild(tr);
-        //     });
-        //   });
-        // }
-
 
         // adding staff into firebase
 
@@ -571,6 +664,42 @@
         });
 
 
+        // add dish to firebase
+
+        function saveDish() {
+            const name = document.getElementById("dishName").value;
+            const category = document.getElementById("dishCategory").value;
+            const ingredients = [];
+
+            const ingredientRows = document.querySelectorAll("#ingredientsContainer > div");
+            ingredientRows.forEach(row => {
+                const inputs = row.querySelectorAll("input");
+                const ingredient = {
+                    name: inputs[0].value,
+                    quantity: parseFloat(inputs[1].value),
+                    unit: inputs[2].value
+                };
+                if (ingredient.name && ingredient.quantity && ingredient.unit) {
+                    ingredients.push(ingredient);
+                }
+            });
+
+            if (!name || !category || ingredients.length === 0) {
+                alert("Please fill out all fields.");
+                return;
+            }
+
+            // 🔥 TODO: Save to Firebase
+            console.log({
+                dishName: name,
+                category: category,
+                ingredients: ingredients
+            });
+
+            // After saving
+            closeAddDishModal();
+        }
+
 
         // show staff into the table
         function loadUsers() {
@@ -609,12 +738,12 @@
         }
 
         function showManageUsers() {
+            hideAllSections();
             console.log("Show manage user clicked");
             document.getElementById("inventorySection").classList.add("hidden");
             document.getElementById("manageUserSection").classList.remove("hidden");
             loadUsers();
         }
-
 
 
         // 🔁 Load data ONCE and keep in memory
