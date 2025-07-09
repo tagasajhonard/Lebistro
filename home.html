@@ -1345,11 +1345,12 @@
                 if (invQtyInGrams < usedQtyInGrams) {
                     insufficient.push(name);
                 }
+
             }
 
             // 2. Stop everything if any are insufficient
             if (insufficient.length > 0) {
-                const message = `Cannot complete order. Not enough stock for:\n- ${insufficient.join("\n- ")}`;
+                const message = `⚠️ Low stock alert cannot complete order. Not enough stock for:\n- ${insufficient.join("\n- ")}`;
                 showErrorModal(message);
                 throw new Error("Insufficient stock for: " + insufficient.join(", "));
             }
