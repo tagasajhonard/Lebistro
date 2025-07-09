@@ -81,6 +81,7 @@
           localStorage.setItem('isLoggedIn', 'true'); // 🔐 session flag
           console.log("Saving role:", staff.role);
           localStorage.setItem("userRole", staff.role);
+          localStorage.setItem("userFullName", staff.name);
           window.location.href = "home.html";
           // Save session, redirect, etc.
         }
