@@ -410,7 +410,8 @@
     </div>
 
     <!-- Dish Order Modal -->
-    <div id="dishOrderModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="dishOrderModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 hidden">
         <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
             <h3 id="modalDishName" class="text-xl font-semibold mb-4 text-center">Order Dish</h3>
 
@@ -430,7 +431,7 @@
     </div>
 
     <!-- error modal for not enough inventory -->
-    <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 hidden">
         <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
             <h3 class="text-xl font-semibold mb-4 text-red-600">Inventory Error</h3>
             <p id="errorModalMessage" class="text-gray-700 mb-4"></p>
@@ -441,6 +442,31 @@
             </div>
         </div>
     </div>
+
+
+    <!-- restocking modal -->
+
+    <!-- Restock Modal -->
+    <!-- Restock Modal -->
+    <div id="restockModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h3 id="restockItemLabel" class="text-xl font-semibold mb-4 text-center">Restock Item</h3>
+
+            <label for="restockAmountInput" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+            <input type="number" id="restockAmountInput" min="0.01" step="0.01"
+                class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Enter amount to restock (e.g. 1.5)" />
+
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeRestockModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                <button onclick="confirmRestock()"
+                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
 
 
 
@@ -605,6 +631,31 @@
         function closeErrorModal() {
             document.getElementById("errorModal").classList.add("hidden");
         }
+
+
+        // open and close restock model
+
+        let restockItemKey = "";        // global
+        let restockItemName = "";
+        let restockCurrentQty = 0;
+        let restockUnit = "";
+
+        function openRestockModal(key, itemName, currentQty, unit) {
+            restockItemKey = key;
+            restockItemName = itemName;
+            restockCurrentQty = currentQty;
+            restockUnit = unit;
+
+            document.getElementById("restockItemLabel").textContent = `Restock: ${itemName}`;
+            document.getElementById("restockAmountInput").value = "";
+            document.getElementById("restockModal").classList.remove("hidden");
+        }
+
+
+        function closeRestockModal() {
+            document.getElementById("restockModal").classList.add("hidden");
+        }
+
 
 
         document.getElementById('addItemForm').addEventListener('submit', function (e) {
@@ -945,7 +996,7 @@
         function renderTable() {
             tbody.innerHTML = "";
 
-            items.forEach((item) => {
+            Object.entries(items).forEach(([key, item]) => {
                 const original = item.originalQuantity || item.quantity;
                 const isLowStock = item.quantity > 0 && item.quantity <= original * 0.3;
                 const isOutOfStock = item.quantity === 0;
@@ -960,7 +1011,9 @@
                 const matchesCategory =
                     currentCategory === "All" || item.category === currentCategory;
 
-                const matchesSearch = item.itemName.toLowerCase().includes(currentSearch);
+                // const matchesSearch = item.itemName.toLowerCase().includes(currentSearch);
+                const matchesSearch = (item.itemName || "").toLowerCase().includes(currentSearch);
+
 
                 if (!(matchesTab && matchesCategory && matchesSearch)) return;
 
@@ -982,7 +1035,10 @@
                     <td class="p-2">${item.quantity} ${stockLabel}</td>
                     <td class="p-2">${item.unit}</td>
                     <td class="p-2">
-                        <button class="text-blue-600 hover:underline">Edit</button>
+                       <button class="text-black mr-2 rounded hover:underline"
+                            onclick="openRestockModal('${key}', '${item.itemName}', ${item.quantity}, '${item.unit}')">
+                            Restock
+                       </button>
                         <button class="text-red-600 hover:underline">Delete</button>
                     </td>
                     `;
@@ -991,18 +1047,21 @@
         }
 
         onValue(inventoryRef, (snapshot) => {
-            items = [];
+            items = {};
             let total = 0;
             let lowStock = 0;
             let outOfStock = 0;
 
             snapshot.forEach((childSnapshot) => {
                 const item = childSnapshot.val();
-                const original = item.originalQuantity || item.quantity;
 
-                items.push(item);
+                const key = childSnapshot.key;
+
+                items[key] = item; // ✅ save using Firebase key as object key
                 total++;
 
+                const original = item.originalQuantity || item.quantity;
+                
                 if (item.quantity === 0) {
                     outOfStock++;
                 } else if (item.quantity <= original * 0.3) {
@@ -1163,38 +1222,6 @@
             });
         }
 
-
-        // function confirmDishOrder() {
-        //     const quantity = parseInt(document.getElementById("orderQuantity").value);
-        //     const staffName = localStorage.getItem("userFullName") || "Unknown Staff";
-
-
-        //     if (!quantity || quantity < 1 || quantity > 9) {
-        //         alert("Please enter a valid quantity between 1 and 9.");
-        //         return;
-        //     }
-
-        //     const timestamp = new Date().toISOString();
-        //     const orderData = {
-        //         dishName: selectedDishName,
-        //         quantity,
-        //         timestamp,
-        //         processBy: staffName
-        //     };
-
-        //     const db = getDatabase(app);
-        //     const orderRef = dbRef(db, "Orders");
-
-        //     push(orderRef, orderData)
-        //         .then(() => {
-        //             alert(`✅ ${quantity} ${selectedDishName} order(s) recorded.`);
-        //             closeDishModal();
-        //         })
-        //         .catch(error => {
-        //             console.error("Error saving order:", error);
-        //             alert("❌ Failed to record order.");
-        //         });
-        // }
 
         async function confirmDishOrder() {
             const quantity = parseInt(document.getElementById("orderQuantity").value);
@@ -1398,6 +1425,62 @@
         }
 
 
+        // restock code saving to firebase
+
+        async function confirmRestock() {
+            const amount = parseFloat(document.getElementById("restockAmountInput").value);
+            if (isNaN(amount) || amount <= 0) {
+                alert("Please enter a valid restock amount.");
+                return;
+            }
+
+            const db = getDatabase();
+            const itemRef = ref(db, `Inventory/${restockItemKey}`);
+
+            try {
+                // 1. Read existing inventory item first
+                const snapshot = await get(itemRef);
+                console.log("Restock item key:", restockItemKey);
+                console.log("Item ref path:", `Inventory/${restockItemKey}`);
+
+                if (!snapshot.exists()) {
+                    alert("❌ Item not found in inventory.");
+                    return;
+                }
+
+                const itemData = snapshot.val();
+                const updatedQuantity = itemData.quantity + amount;
+                const updatedOriginalQty = (itemData.originalQuantity || itemData.quantity) + amount;
+
+                // 2. Update Inventory
+                await update(itemRef, {
+                    quantity: updatedQuantity,
+                    originalQuantity: updatedOriginalQty
+                });
+
+                // 3. Save to RestockHistory
+                const staffName = localStorage.getItem("userFullName") || "Unknown Staff";
+                const restockData = {
+                    itemName: restockItemName,
+                    amountAdded: amount,
+                    unit: restockUnit,
+                    restockedBy: staffName,
+                    timestamp: new Date().toISOString()
+                };
+
+                await push(ref(db, "RestockHistory"), restockData);
+
+                alert(`✅ ${amount} ${restockUnit} of ${restockItemName} restocked successfully.`);
+                closeRestockModal();
+
+            } catch (error) {
+                console.error("Restock failed:", error);
+                alert("❌ Failed to restock item.");
+            }
+        }
+
+
+
         loadCategories();
         renderTable();
 
@@ -1408,6 +1491,7 @@
         window.loadDishCards = loadDishCards;
 
         window.confirmDishOrder = confirmDishOrder;
+        window.confirmRestock = confirmRestock;
 
 
     </script>
