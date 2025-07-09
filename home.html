@@ -1228,7 +1228,7 @@
 
             } catch (error) {
                 console.error("Order process failed:", error);
-                alert("❌ Failed to complete order. Possibly not enough ingredients.");
+                // alert("❌ Failed to complete order. Possibly not enough ingredients.");
             }
         }
 
@@ -1304,148 +1304,82 @@
         // }
 
 
+        async function orderDish(dishId, quantity) {
+            const db = getDatabase();
 
-        // async function orderDish(dishId, quantity) {
-        //     const db = getDatabase();
+            console.log("orderDish called with dishId:", dishId, "quantity:", quantity);
 
-        //     console.log("orderDish called with dishId:", dishId, "quantity:", quantity);
+            const dishSnapshot = await get(ref(db, `Dish/${dishId}`));
+            if (!dishSnapshot.exists()) {
+                console.error("Dish not found.");
+                throw new Error("Dish not found.");
+            }
 
-        //     // Get Dish ingredients
-        //     const dishSnapshot = await get(ref(db, `Dish/${dishId}`));
-        //     if (!dishSnapshot.exists()) {
-        //         console.error("Dish not found.");
-        //         throw new Error("Dish not found.");
-        //     }
+            const dishData = dishSnapshot.val();
+            const ingredients = dishData.ingredients;
 
-        //     const dishData = dishSnapshot.val();
-        //     const ingredients = dishData.ingredients;
+            const inventorySnapshot = await get(ref(db, "Inventory"));
+            const inventoryData = inventorySnapshot.val();
 
-        //     // Get all Inventory items
-        //     const inventorySnapshot = await get(ref(db, "Inventory"));
-        //     const inventoryData = inventorySnapshot.val();
+            const insufficient = [];
 
-        //     const updates = {};
+            // 1. First pass: check for all insufficient items
+            for (const ingredient of ingredients) {
+                const { name, quantity: usedQuantity, unit: dishUnit } = ingredient;
+                const usedQtyInGrams = convertToGrams(usedQuantity, dishUnit) * quantity;
 
-        //     for (const ingredient of ingredients) {
-        //         const { name, quantity: usedQuantity, unit: dishUnit } = ingredient;
+                const matchedKey = Object.keys(inventoryData).find(key =>
+                    inventoryData[key].itemName.toLowerCase().includes(name.toLowerCase())
+                );
 
-        //         // ✅ Proper conversion and scaling
-        //         const usedQtyInGrams = convertToGrams(usedQuantity, dishUnit) * quantity;
+                if (!matchedKey) {
+                    console.warn(`Ingredient "${name}" not found in inventory.`);
+                    continue;
+                }
 
-        //         // Find matching item in inventory
-        //         const matchedKey = Object.keys(inventoryData).find(key => {
-        //             return inventoryData[key].itemName.toLowerCase().includes(name.toLowerCase());
-        //         });
+                const item = inventoryData[matchedKey];
+                const invUnit = item.unit;
+                const invQuantity = item.quantity;
+                const invQtyInGrams = convertToGrams(invQuantity, invUnit);
 
-        //         if (!matchedKey) {
-        //             console.warn(`Ingredient "${name}" not found in inventory.`);
-        //             continue;
-        //         }
+                if (invQtyInGrams < usedQtyInGrams) {
+                    insufficient.push(name);
+                }
+            }
 
-        //         const item = inventoryData[matchedKey];
-        //         const invUnit = item.unit;
-        //         const invQuantity = item.quantity;
+            // 2. Stop everything if any are insufficient
+            if (insufficient.length > 0) {
+                const message = `Cannot complete order. Not enough stock for:\n- ${insufficient.join("\n- ")}`;
+                showErrorModal(message);
+                throw new Error("Insufficient stock for: " + insufficient.join(", "));
+            }
 
-        //         const invQtyInGrams = convertToGrams(invQuantity, invUnit);
+            // 3. Second pass: now calculate updates because all ingredients are sufficient
+            const updates = {};
 
-        //         if (invQtyInGrams < usedQtyInGrams) {
-        //             showErrorModal(`❌ Not enough stock for "${name}". Please adjust the quantity or restock.`);
+            for (const ingredient of ingredients) {
+                const { name, quantity: usedQuantity, unit: dishUnit } = ingredient;
+                const usedQtyInGrams = convertToGrams(usedQuantity, dishUnit) * quantity;
 
-        //         }
+                const matchedKey = Object.keys(inventoryData).find(key =>
+                    inventoryData[key].itemName.toLowerCase().includes(name.toLowerCase())
+                );
 
-        //         const newQtyInGrams = invQtyInGrams - usedQtyInGrams;
-        //         const newQtyInOriginalUnit = convertFromGrams(newQtyInGrams, invUnit);
+                const item = inventoryData[matchedKey];
+                const invUnit = item.unit;
+                const invQuantity = item.quantity;
+                const invQtyInGrams = convertToGrams(invQuantity, invUnit);
 
-        //         // Optional: rounding to 3 decimal places safely
-        //         // updates[`Inventory/${matchedKey}/quantity`] = Math.round(newQtyInOriginalUnit * 1000) / 1000;
+                const newQtyInGrams = invQtyInGrams - usedQtyInGrams;
+                const newQtyInOriginalUnit = convertFromGrams(newQtyInGrams, invUnit);
 
-        //         // Best for accuracy
-        //         updates[`Inventory/${matchedKey}/quantity`] = newQtyInOriginalUnit;
+                updates[`Inventory/${matchedKey}/quantity`] = newQtyInOriginalUnit;
+            }
 
-        //     }
-
-        //     // Update all at once
-        //     await update(ref(db), updates);
-        //     console.log("✅ Inventory updated after ordering dish.");
-        // }
-
-
- async function orderDish(dishId, quantity) {
-    const db = getDatabase();
-
-    console.log("orderDish called with dishId:", dishId, "quantity:", quantity);
-
-    const dishSnapshot = await get(ref(db, `Dish/${dishId}`));
-    if (!dishSnapshot.exists()) {
-        console.error("Dish not found.");
-        throw new Error("Dish not found.");
-    }
-
-    const dishData = dishSnapshot.val();
-    const ingredients = dishData.ingredients;
-
-    const inventorySnapshot = await get(ref(db, "Inventory"));
-    const inventoryData = inventorySnapshot.val();
-
-    const insufficient = [];
-
-    // 1. First pass: check for all insufficient items
-    for (const ingredient of ingredients) {
-        const { name, quantity: usedQuantity, unit: dishUnit } = ingredient;
-        const usedQtyInGrams = convertToGrams(usedQuantity, dishUnit) * quantity;
-
-        const matchedKey = Object.keys(inventoryData).find(key =>
-            inventoryData[key].itemName.toLowerCase().includes(name.toLowerCase())
-        );
-
-        if (!matchedKey) {
-            console.warn(`Ingredient "${name}" not found in inventory.`);
-            continue;
+            // 4. Apply updates safely
+            await update(ref(db), updates);
+            console.log("✅ Inventory updated after ordering dish.");
         }
-
-        const item = inventoryData[matchedKey];
-        const invUnit = item.unit;
-        const invQuantity = item.quantity;
-        const invQtyInGrams = convertToGrams(invQuantity, invUnit);
-
-        if (invQtyInGrams < usedQtyInGrams) {
-            insufficient.push(name);
-        }
-    }
-
-    // 2. Stop everything if any are insufficient
-    if (insufficient.length > 0) {
-        const message = `❌ Cannot complete order. Not enough stock for:\n- ${insufficient.join("\n- ")}`;
-        showErrorModal(message);
-        throw new Error("Insufficient stock for: " + insufficient.join(", "));
-    }
-
-    // 3. Second pass: now calculate updates because all ingredients are sufficient
-    const updates = {};
-
-    for (const ingredient of ingredients) {
-        const { name, quantity: usedQuantity, unit: dishUnit } = ingredient;
-        const usedQtyInGrams = convertToGrams(usedQuantity, dishUnit) * quantity;
-
-        const matchedKey = Object.keys(inventoryData).find(key =>
-            inventoryData[key].itemName.toLowerCase().includes(name.toLowerCase())
-        );
-
-        const item = inventoryData[matchedKey];
-        const invUnit = item.unit;
-        const invQuantity = item.quantity;
-        const invQtyInGrams = convertToGrams(invQuantity, invUnit);
-
-        const newQtyInGrams = invQtyInGrams - usedQtyInGrams;
-        const newQtyInOriginalUnit = convertFromGrams(newQtyInGrams, invUnit);
-
-        updates[`Inventory/${matchedKey}/quantity`] = newQtyInOriginalUnit;
-    }
-
-    // 4. Apply updates safely
-    await update(ref(db), updates);
-    console.log("✅ Inventory updated after ordering dish.");
-}
 
         // Unit conversion functions
         function convertToGrams(value, unit) {
