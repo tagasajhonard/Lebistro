@@ -89,7 +89,7 @@
 
 
         <!-- Logout Confirmation Modal -->
-        <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
+        <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden px-4">
             <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
                 <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
                 <p class="mb-6">Are you sure you want to logout?</p>
@@ -115,7 +115,7 @@
                 <a href="#" onclick="ViewDishes()" class="block p-2 rounded hover:bg-green-100">View Dishes</a>
                 <a href="#" class="block p-2 rounded hover:bg-green-100">Inventory</a>
                 <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
-                
+
 
                 <div>
                     <button @click="openSettings = !openSettings"
@@ -144,6 +144,9 @@
                         </div>
                     </div>
                 </div>
+                <a onclick="logout()" class="block p-2 rounded hover:bg-green-100 cursor-pointer">
+                    Logout
+                </a>
             </nav>
         </aside>
 
@@ -177,7 +180,7 @@
 
 
             <!-- Inventory Table -->
-            <div id="inventorySection" class="bg-white p-4 rounded shadow ">
+            <div id="inventorySection" class="bg-white p-4 rounded shadow overflow-y-auto">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold">Manage Items</h2>
                     <div class="flex justify-end gap-2 flex-wrap ml-auto">
@@ -307,8 +310,16 @@
 
                 <input type="number" id="quantity" placeholder="Quantity" class="w-full mb-2 p-2 border rounded"
                     required />
-                <input type="text" id="unit" placeholder="Unit (e.g., Kg, L)" class="w-full mb-4 p-2 border rounded"
-                    required />
+                <!-- <input type="text" id="unit" placeholder="Unit (e.g., Kg, L)" class="w-full mb-4 p-2 border rounded"
+                    required /> -->
+                <select id="unit"
+                    class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <option value="Grams">Grams</option>
+                    <option value="Kg">Kilograms</option>
+                    <option value="Ml">Milliliters</option>
+                    <option value="L">Liters</option>
+                    <option value="Pieces">Pieces</option>
+                </select>
                 <div class="flex justify-end gap-2">
                     <button type="button" onclick="hideModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
                     <button type="submit" class="button-save  text-white px-4 py-2 rounded">Save</button>
@@ -446,27 +457,6 @@
     </div>
 
 
-    <!-- restocking modal -->
-
-    <!-- Restock Modal -->
-    <!-- <div id="restockModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
-            <h3 id="restockItemLabel" class="text-xl font-semibold mb-4 text-center">Restock Item</h3>
-
-            <label for="restockAmountInput" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-            <input type="number" id="restockAmountInput" min="0.01" step="0.01"
-                class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Enter amount to restock (e.g. 1.5)" />
-
-            <div class="flex justify-end space-x-2">
-                <button onclick="closeRestockModal()"
-                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
-                <button onclick="confirmRestock()"
-                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
-            </div>
-        </div>
-    </div> -->
-
     <!-- Restock Modal -->
     <div id="restockModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
@@ -486,7 +476,7 @@
                 <option value="Kg">Kilograms</option>
                 <option value="Ml">Milliliters</option>
                 <option value="L">Liters</option>
-                <option value="pieces">Pieces</option>
+                <option value="Pieces">Pieces</option>
             </select>
 
             <div class="flex justify-end space-x-2">
