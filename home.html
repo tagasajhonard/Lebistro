@@ -447,8 +447,7 @@
     <!-- restocking modal -->
 
     <!-- Restock Modal -->
-    <!-- Restock Modal -->
-    <div id="restockModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <!-- <div id="restockModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
             <h3 id="restockItemLabel" class="text-xl font-semibold mb-4 text-center">Restock Item</h3>
 
@@ -463,6 +462,83 @@
                 <button onclick="confirmRestock()"
                     class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
             </div>
+        </div>
+    </div> -->
+
+    <!-- Restock Modal -->
+    <div id="restockModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h3 id="restockItemLabel" class="text-xl font-semibold mb-4 text-center">Restock Item</h3>
+
+            <!-- Amount Input -->
+            <label for="restockAmountInput" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+            <input type="number" id="restockAmountInput" min="0.01" step="0.01"
+                class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Enter amount to restock (e.g. 1.5)" />
+
+            <!-- Unit Select -->
+            <label for="restockUnitInput" class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+            <select id="restockUnitInput"
+                class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="Grams">Grams</option>
+                <option value="Kg">Kilograms</option>
+                <option value="Ml">Milliliters</option>
+                <option value="L">Liters</option>
+                <option value="pieces">Pieces</option>
+            </select>
+
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeRestockModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                <button onclick="confirmRestock()"
+                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Wastage Modal -->
+    <div id="wastageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 class="text-xl font-semibold mb-4">Mark Item as Wasted</h2>
+
+            <form id="wastageForm">
+                <input type="hidden" id="wasteKey">
+                <input type="hidden" id="wasteItemName">
+
+                <div class="mb-4">
+                    <label class="block text-gray-700">Quantity to Deduct</label>
+                    <input type="number" id="wasteQty" class="w-full border p-2 rounded" required min="1">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700">Unit</label>
+                    <select id="wasteUnit" class="w-full border p-2 rounded">
+                        <option value="Grams">Grams</option>
+                        <option value="Kg">Kilograms</option>
+                        <option value="Ml">Milliliters</option>
+                        <option value="L">Liters</option>
+                        <option value="pieces">Pieces</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700">Reason</label>
+                    <select id="wasteReason" class="w-full border p-2 rounded">
+                        <option value="Spoiled">Spoiled</option>
+                        <option value="Damaged">Damaged</option>
+                        <option value="Spilled">Spilled</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeWastageModal()"
+                        class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Confirm</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -648,6 +724,8 @@
 
             document.getElementById("restockItemLabel").textContent = `Restock: ${itemName}`;
             document.getElementById("restockAmountInput").value = "";
+            document.getElementById("restockUnitInput").value = unit;
+
             document.getElementById("restockModal").classList.remove("hidden");
         }
 
@@ -655,6 +733,95 @@
         function closeRestockModal() {
             document.getElementById("restockModal").classList.add("hidden");
         }
+
+
+        // Unit conversion functions
+        function convertToGrams(value, unit) {
+            unit = unit.toLowerCase();
+            if (unit === "kg" || unit === "l") return value * 1000;
+            if (unit === "grams" || unit === "g") return value;
+            return value; // fallback
+        }
+
+        function convertFromGrams(value, unit) {
+            unit = unit.toLowerCase();
+            if (unit === "kg" || unit === "l") return value / 1000;
+            if (unit === "grams" || unit === "g") return value;
+            return value; // fallback
+        }
+
+
+        // wastage script 
+
+        function openWastageModal(key, itemName, currentQty, unit) {
+            document.getElementById('wastageModal').classList.remove('hidden');
+            document.getElementById('wasteKey').value = key;
+            document.getElementById('wasteItemName').value = itemName;
+            document.getElementById('wasteQty').max = currentQty;
+            document.getElementById('wasteUnit').value = unit;
+
+            const convertedQty = convertToGrams(currentQty, unit); // or convertToPieces(), etc.
+
+            document.getElementById('wasteQty').value = '';
+            document.getElementById('wasteQty').max = convertedQty;
+        }
+
+
+        function closeWastageModal() {
+            document.getElementById('wastageModal').classList.add('hidden');
+        }
+
+        document.getElementById('wastageForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const key = document.getElementById('wasteKey').value;
+            const name = document.getElementById('wasteItemName').value;
+            const qty = parseFloat(document.getElementById('wasteQty').value);
+            const unit = document.getElementById('wasteUnit').value;
+            const reason = document.getElementById('wasteReason').value;
+
+            try {
+                await deductWastage(key, name, qty, unit, reason);
+                alert("✅ Wastage recorded successfully!");
+                closeWastageModal();
+            } catch (err) {
+                alert("❌ Error: " + err.message);
+            }
+        });
+
+        function convertBetweenUnits(value, fromUnit, toUnit) {
+            const unitMap = {
+                grams: 1,
+                g: 1,
+                kilograms: 1000,
+                kg: 1000,
+                milliliters: 1,
+                ml: 1,
+                liters: 1000,
+                l: 1000,
+                pieces: 1,
+                pcs: 1
+            };
+
+            const from = fromUnit.trim().toLowerCase();
+            const to = toUnit.trim().toLowerCase();
+
+            if (from === to) return value;
+
+            if (!unitMap[from] || !unitMap[to]) {
+                throw new Error(`Unsupported unit conversion: ${fromUnit} to ${toUnit}`);
+            }
+
+            const baseValue = value * unitMap[from];   // Convert to base unit (grams/ml/pieces)
+            const result = baseValue / unitMap[to];    // Convert to target unit
+
+            return result;
+        }
+
+
+
+
+
 
 
 
@@ -1039,7 +1206,10 @@
                             onclick="openRestockModal('${key}', '${item.itemName}', ${item.quantity}, '${item.unit}')">
                             Restock
                        </button>
-                        <button class="text-red-600 hover:underline">Delete</button>
+                       <button class="text-red-500 hover:underline"
+                            onclick="openWastageModal('${key}', '${item.itemName}', ${item.quantity}, '${item.unit}')">
+                            Wastage
+                        </button>
                     </td>
                     `;
                 tbody.appendChild(tr);
@@ -1061,7 +1231,7 @@
                 total++;
 
                 const original = item.originalQuantity || item.quantity;
-                
+
                 if (item.quantity === 0) {
                     outOfStock++;
                 } else if (item.quantity <= original * 0.3) {
@@ -1270,67 +1440,6 @@
 
         // code for deducting the order from inventory
 
-        // async function orderDish(dishId, quantity) {
-        //     const db = getDatabase();
-
-        //      console.log("orderDish called with dishId:", dishId, "quantity:", quantity);
-
-
-        //     // Get Dish ingredients
-        //     const dishSnapshot = await get(ref(db, `Dish/${dishId}`));
-        //     if (!dishSnapshot.exists()) {
-        //         console.error("Dish not found.");
-        //         return;
-        //     }
-
-        //     const dishData = dishSnapshot.val();
-        //     const ingredients = dishData.ingredients;
-
-        //     // Get all Inventory items
-        //     const inventorySnapshot = await get(ref(db, "Inventory"));
-        //     const inventoryData = inventorySnapshot.val();
-
-        //     const updates = {};
-
-        //     for (const ingredient of ingredients) {
-        //         const { name, quantity: usedQuantity, unit: dishUnit } = ingredient;
-
-        //         // Find matching item in inventory
-        //         const matchedKey = Object.keys(inventoryData).find(key => {
-        //             return inventoryData[key].itemName.toLowerCase().includes(name.toLowerCase());
-        //         });
-
-        //         if (!matchedKey) {
-        //             console.warn(`Ingredient "${name}" not found in inventory.`);
-        //             continue;
-        //         }
-
-        //         const item = inventoryData[matchedKey];
-        //         const invUnit = item.unit;
-        //         const invQuantity = item.quantity;
-
-        //         // Convert both to grams
-        //         const invQtyInGrams = convertToGrams(invQuantity, invUnit);
-        //         const usedQtyInGrams = convertToGrams(usedQuantity, dishUnit);
-
-        //         if (invQtyInGrams < usedQtyInGrams) {
-        //             console.warn(`${name} is not enough in stock.`);
-        //             continue;
-        //         }
-
-        //         const newQtyInGrams = invQtyInGrams - usedQtyInGrams;
-        //         const newQtyInOriginalUnit = convertFromGrams(newQtyInGrams, invUnit);
-
-        //         updates[`Inventory/${matchedKey}/quantity`] = parseFloat(newQtyInOriginalUnit.toFixed(3));
-        //     }
-
-
-        //     // Update all at once
-        //     await update(ref(db), updates);
-        //     console.log("Inventory updated after ordering dish.");
-        // }
-
-
         async function orderDish(dishId, quantity) {
             const db = getDatabase();
 
@@ -1409,26 +1518,65 @@
             console.log("✅ Inventory updated after ordering dish.");
         }
 
-        // Unit conversion functions
-        function convertToGrams(value, unit) {
-            unit = unit.toLowerCase();
-            if (unit === "kg" || unit === "l") return value * 1000;
-            if (unit === "grams" || unit === "g") return value;
-            return value; // fallback
-        }
-
-        function convertFromGrams(value, unit) {
-            unit = unit.toLowerCase();
-            if (unit === "kg" || unit === "l") return value / 1000;
-            if (unit === "grams" || unit === "g") return value;
-            return value; // fallback
-        }
-
 
         // restock code saving to firebase
 
+        // async function confirmRestock() {
+        //     const amount = parseFloat(document.getElementById("restockAmountInput").value);
+
+        //     if (isNaN(amount) || amount <= 0) {
+        //         alert("Please enter a valid restock amount.");
+        //         return;
+        //     }
+
+        //     const db = getDatabase();
+        //     const itemRef = ref(db, `Inventory/${restockItemKey}`);
+
+        //     try {
+        //         // 1. Read existing inventory item first
+        //         const snapshot = await get(itemRef);
+        //         console.log("Restock item key:", restockItemKey);
+        //         console.log("Item ref path:", `Inventory/${restockItemKey}`);
+
+        //         if (!snapshot.exists()) {
+        //             alert("❌ Item not found in inventory.");
+        //             return;
+        //         }
+
+        //         const itemData = snapshot.val();
+        //         const updatedQuantity = itemData.quantity + amount;
+        //         const updatedOriginalQty = (itemData.originalQuantity || itemData.quantity) + amount;
+
+        //         // 2. Update Inventory
+        //         await update(itemRef, {
+        //             quantity: updatedQuantity,
+        //             originalQuantity: updatedOriginalQty
+        //         });
+
+        //         // 3. Save to RestockHistory
+        //         const staffName = localStorage.getItem("userFullName") || "Unknown Staff";
+        //         const restockData = {
+        //             itemName: restockItemName,
+        //             amountAdded: amount,
+        //             unit: restockUnit,
+        //             restockedBy: staffName,
+        //             timestamp: new Date().toISOString()
+        //         };
+
+        //         await push(ref(db, "RestockHistory"), restockData);
+
+        //         alert(`✅ ${amount} ${restockUnit} of ${restockItemName} restocked successfully.`);
+        //         closeRestockModal();
+
+        //     } catch (error) {
+        //         console.error("Restock failed:", error);
+        //         alert("❌ Failed to restock item.");
+        //     }
+        // }
         async function confirmRestock() {
             const amount = parseFloat(document.getElementById("restockAmountInput").value);
+            const inputUnit = document.getElementById("restockUnitInput").value;
+
             if (isNaN(amount) || amount <= 0) {
                 alert("Please enter a valid restock amount.");
                 return;
@@ -1438,48 +1586,108 @@
             const itemRef = ref(db, `Inventory/${restockItemKey}`);
 
             try {
-                // 1. Read existing inventory item first
-                const snapshot = await get(itemRef);
-                console.log("Restock item key:", restockItemKey);
-                console.log("Item ref path:", `Inventory/${restockItemKey}`);
+                console.log("🧪 Restocking:", amount, inputUnit);
+                console.log("➡️ Inventory key:", restockItemKey);
 
+                const snapshot = await get(itemRef);
                 if (!snapshot.exists()) {
                     alert("❌ Item not found in inventory.");
                     return;
                 }
 
                 const itemData = snapshot.val();
-                const updatedQuantity = itemData.quantity + amount;
-                const updatedOriginalQty = (itemData.originalQuantity || itemData.quantity) + amount;
+                console.log("📦 Current Inventory Item:", itemData);
 
-                // 2. Update Inventory
+                const inventoryQuantity = itemData.quantity;
+                const inventoryUnit = itemData.unit;
+
+                console.log("💡 Existing Qty:", inventoryQuantity, inventoryUnit);
+
+                // 🔄 Convert to same unit
+                const convertedAmount = convertBetweenUnits(amount, inputUnit, inventoryUnit);
+                console.log("✅ Converted Amount to Match Unit:", convertedAmount);
+
+                const updatedQuantity = inventoryQuantity + convertedAmount;
+                const updatedOriginalQty = (itemData.originalQuantity || inventoryQuantity) + convertedAmount;
+
+                // ⚠️ Ensure values are not NaN
+                if (isNaN(updatedQuantity)) throw new Error("Invalid updated quantity");
+
                 await update(itemRef, {
                     quantity: updatedQuantity,
                     originalQuantity: updatedOriginalQty
+                    // DO NOT update the unit here — keep it consistent
                 });
 
-                // 3. Save to RestockHistory
                 const staffName = localStorage.getItem("userFullName") || "Unknown Staff";
                 const restockData = {
                     itemName: restockItemName,
                     amountAdded: amount,
-                    unit: restockUnit,
+                    unit: inputUnit,
                     restockedBy: staffName,
                     timestamp: new Date().toISOString()
                 };
 
                 await push(ref(db, "RestockHistory"), restockData);
 
-                alert(`✅ ${amount} ${restockUnit} of ${restockItemName} restocked successfully.`);
+                alert(`✅ ${amount} ${inputUnit} of ${restockItemName} restocked successfully.`);
                 closeRestockModal();
 
             } catch (error) {
-                console.error("Restock failed:", error);
-                alert("❌ Failed to restock item.");
+                console.error("Restock failed:", error); // 👈 this will now show full error
+                alert("❌ Failed to restock item. See console for details.");
             }
         }
 
+        // function for wastage
 
+        async function deductWastage(itemKey, itemName, quantity, unit, reason) {
+            const db = getDatabase();
+
+            const itemRef = ref(db, `Inventory/${itemKey}`);
+            const itemSnapshot = await get(itemRef);
+
+            if (!itemSnapshot.exists()) {
+                console.error(`Item "${itemKey}" not found in inventory.`);
+                throw new Error("Item not found in inventory.");
+            }
+
+            const item = itemSnapshot.val();
+            const currentQty = item.quantity;
+            const currentUnit = item.unit;
+
+            const deductInGrams = convertToGrams(quantity, unit);
+            const currentInGrams = convertToGrams(currentQty, currentUnit);
+
+            if (deductInGrams > currentInGrams) {
+                console.error("Cannot deduct more than available stock.");
+                throw new Error("Not enough stock to deduct.");
+            }
+
+            const newQtyInGrams = currentInGrams - deductInGrams;
+            const newQtyInOriginalUnit = convertFromGrams(newQtyInGrams, currentUnit);
+
+            // Update inventory
+            const updates = {};
+            updates[`Inventory/${itemKey}/quantity`] = newQtyInOriginalUnit;
+
+            // Save to wastage logs
+            const wastageRef = push(ref(db, "WastageLogs"));
+            const logData = {
+                itemName,
+                deductedQuantity: quantity,
+                unit,
+                reason,
+                date: new Date().toISOString()
+            };
+
+            await Promise.all([
+                update(ref(db), updates),
+                set(wastageRef, logData)
+            ]);
+
+            console.log("✅ Wastage deducted and logged successfully.");
+        }
 
         loadCategories();
         renderTable();
@@ -1493,6 +1701,7 @@
         window.confirmDishOrder = confirmDishOrder;
         window.confirmRestock = confirmRestock;
 
+        window.deductWastage = deductWastage;
 
     </script>
 
