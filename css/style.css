@@ -1,0 +1,71 @@
+:root {
+  --primary-color: #4CAF50;
+  --primary-hover: #45a049;
+  --danger-color: #f44336;
+  --warning-color: #ff9800;
+  --text-dark: #1f2937;
+  --text-light: #6b7280;
+  --bg-light: #f9fafb;
+  --white: #ffffff;
+  --accent-orange: #fec369;
+
+}
+
+
+@font-face {
+  font-family: 'Poppins';
+  src: url('../fonts/Poppins-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+.tab-button {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-button:hover {
+  border-color: var(--accent-orange);
+  /* green-400 */
+}
+
+.active-tab {
+  border-color: var(--accent-orange);
+  /* green-600 */
+  color: var(--accent-orange);
+}
+
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+}
+
+.button-save {
+  background-color: var(--accent-orange);
+  color: var(--white);
+}
+
+.button-save:hover {
+  background-color: var(--primary-hover);
+}
+
+.badge-low {
+  background-color: var(--warning-color);
+  color: var(--text-dark);
+}
+
+.badge-out {
+  background-color: var(--danger-color);
+  color: var(--white);
+}
+.nav{
+  color: var(--accent-orange);
+}

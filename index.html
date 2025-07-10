@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/x-icon" href="img/logo.jpg">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<script>
+  if (localStorage.getItem('isLoggedIn') === 'true') {
+    // 🔁 Redirect to home if already logged in
+    window.location.href = "home.html";
+  }
+</script>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen px-6">
+
+  <div class="bg-white shadow-md rounded-xl p-8 w-full max-w-sm px-4">
+    <h2 class="text-2xl font-semibold mb-6 text-center">Login</h2>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+        <input type="email" id="email" placeholder="Enter your email" required
+          class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required
+          class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <button type="submit"
+        class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+        Login
+      </button>
+    </form>
+  </div>
+
+</body>
+<script type="module">
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAirT0VzOc7Bzcsj3oV5_9PQS8f990uzwo",
+    authDomain: "lebistro-9be16.firebaseapp.com",
+    projectId: "lebistro-9be16",
+    storageBucket: "lebistro-9be16.firebasestorage.app",
+    messagingSenderId: "115040507366",
+    appId: "1:115040507366:web:3281b19470f482cff0f227"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+  const database = getDatabase(app);
+  const loginForm = document.getElementById('loginForm');
+
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const inputEmail = document.getElementById('email').value.trim();
+    const inputPassword = document.getElementById('password').value.trim();
+
+    const staffRef = ref(database, 'Staff');
+
+    onValue(staffRef, (snapshot) => {
+      let found = false;
+
+      snapshot.forEach((childSnapshot) => {
+        const staff = childSnapshot.val();
+
+        if (staff.email === inputEmail && staff.pass === inputPassword) {
+          found = true;
+          alert(`✅ Welcome ${staff.name}! Your role is ${staff.role}`);
+          localStorage.setItem('isLoggedIn', 'true'); // 🔐 session flag
+          console.log("Saving role:", staff.role);
+          localStorage.setItem("userRole", staff.role);
+          localStorage.setItem("userFullName", staff.name);
+          window.location.href = "home.html";
+          // Save session, redirect, etc.
+        }
+      });
+
+      if (!found) {
+        alert("❌ Incorrect email or password.");
+      }
+    }, {
+      onlyOnce: true
+    });
+  });
+</script>
+
+</html>

@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Restaurant Inventory Admin</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/x-icon" href="img/logo.jpg">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+        alert("You must log in first.");
+        window.location.href = "index.html";
+    }
+</script>
+<script>
+    console.log("Stored role:", localStorage.getItem("userRole"));
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(() => {
+            const role = localStorage.getItem("userRole");
+
+            if (role !== "Admin") {
+                // Hide all admin-only elements
+                const adminOnlyElements = document.querySelectorAll('[data-role="admin-only"]');
+                adminOnlyElements.forEach(el => el.classList.add("hidden"));
+
+                // Optionally: remove the Manage Users section
+                const manageUserSection = document.getElementById("manageUserSection");
+                if (manageUserSection) {
+                    manageUserSection.remove();
+                }
+            }
+        }); // Wait a bit to ensure Alpine has rendered
+    });
+</script>
+
+<body class=" text-gray-800">
+
+    <!-- Sidebar -->
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        <aside class="bg-white shadow-lg p-5 space-y-6 w-full lg:w-64 hidden lg:block">
+            <h1 class="text-2xl font-bold nav">Navigation</h1>
+            <nav class="space-y-3" x-data="{ openSettings: false }">
+                <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
+                <a href="#" onclick="ViewDishes()" class="block p-2 rounded hover:bg-green-100">View Dishes</a>
+                <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
+
+                <!-- Settings with submenu -->
+                <div>
+                    <button @click="openSettings = !openSettings"
+                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+                        <span>Management</span>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transform transition-transform duration-200"
+                            :class="openSettings ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div x-data="{ openAddCategory: false }">
+                        <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+                            <a href="#" onclick="showManageUsers()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Manage User
+                            </a>
+
+                            <a href="#" onclick="showDishSection()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Manage Dish
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
+                <!-- Logout Button -->
+
+                <a onclick="logout()" class="block p-2 rounded hover:bg-green-100 cursor-pointer">
+                    Logout
+                </a>
+            </nav>
+        </aside>
+
+
+        <!-- Logout Confirmation Modal -->
+        <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
+                <p class="mb-6">Are you sure you want to logout?</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="confirmLogout()"
+                        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Yes</button>
+                    <button onclick="closeLogoutModal()"
+                        class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:hidden flex justify-between items-center bg-white px-4 py-3 shadow-md">
+            <h1 class="text-xl font-bold text-green-600">Navigation</h1>
+            <button onclick="toggleSidebar()" class="text-gray-700 text-2xl">&#9776;</button>
+        </div>
+
+        <!-- Sidebar for mobile -->
+        <aside id="mobileSidebar" class="bg-white w-full lg:hidden hidden p-2 space-y-2 shadow-md">
+            <!-- sidebar links -->
+            <nav class="space-y-2" x-data="{ openSettings: false }">
+                <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
+                <a href="#" onclick="ViewDishes()" class="block p-2 rounded hover:bg-green-100">View Dishes</a>
+                <a href="#" class="block p-2 rounded hover:bg-green-100">Inventory</a>
+                <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
+                
+
+                <div>
+                    <button @click="openSettings = !openSettings"
+                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+                        <span>Management</span>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transform transition-transform duration-200"
+                            :class="openSettings ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div x-data="{ openAddCategory: false }">
+                        <div x-show="openSettings" x-cloak class="ml-2 mt-1 border-l-2 border-gray-300 pl-4 space-y-2">
+                            <a href="#" onclick="showManageUsers()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Manage User
+                            </a>
+
+                            <a href="#" onclick="showDishSection()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Manage Dish
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6">
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-6 gap-2">
+                <h2 class="text-2xl font-semibold">Inventory Dashboard</h2>
+
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-500">Total Items</p>
+                    <h3 id="totalItems" class="text-xl font-bold">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-500">Dishes with Recipes</p>
+                    <h3 id="dishesWithRecipes" class="text-xl font-bold">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-500">Low Stock</p>
+                    <h3 id="lowStockCount" class="text-xl font-bold">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-500">Out of Stock</p>
+                    <h3 id="outOfStockCount" class="text-xl font-bold">0</h3>
+                </div>
+            </div>
+
+
+            <!-- Inventory Table -->
+            <div id="inventorySection" class="bg-white p-4 rounded shadow ">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Manage Items</h2>
+                    <div class="flex justify-end gap-2 flex-wrap ml-auto">
+                        <button onclick="showModal()"
+                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm whitespace-nowrap">Add
+                            Items</button>
+                        <button onclick="openAddCategoryModal(event)"
+                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm whitespace-nowrap">Add
+                            Category</button>
+
+                    </div>
+
+                </div>
+                <div class="mb-4 flex justify-between items-center">
+                    <input id="searchInput" type="text" placeholder="Search items..."
+                        class="border px-3 py-2 rounded w-1/2" />
+                    <select id="categoryFilter" class="border px-2 py-2 rounded">
+                    </select>
+                </div>
+
+                <!-- Tabs -->
+                <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
+
+                    <button class="tab-button active-tab" onclick="filterInventory('all', this)"
+                        data-filter="all">All</button>
+                    <button class="tab-button " onclick="filterInventory('low', this)" data-filter="low">Low
+                        Stock</button>
+                    <button class="tab-button " onclick="filterInventory('out', this)" data-filter="out">Out of
+                        Stock</button>
+
+                </div>
+
+                <!-- Table -->
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-[600px] table-fixed w-full border-collapse">
+                        <thead class="bg-green-100 text-left">
+                            <tr>
+                                <th class="p-2">Item Name</th>
+                                <th class="p-2">Category</th>
+                                <th class="p-2">Quantity</th>
+                                <th class="p-2">Unit</th>
+                                <th class="p-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody">
+                            <!-- Items from Firebase will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- MANAGE USER TABLE (initially hidden) -->
+            <div id="manageUserSection" class="bg-white p-4 rounded shadow hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Manage Users</h2>
+                    <button onclick="openAddStaffModal()"
+                        class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Add Staff</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-[500px] table-fixed w-full border-collapse">
+                        <thead class="bg-gray-100 text-left">
+                            <tr>
+                                <th class="p-2">Name</th>
+                                <th class="p-2">Email</th>
+                                <th class="p-2">Role</th>
+                                <th class="p-2">Status</th>
+                                <th class="p-2">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="userTableBody">
+                            <!-- Users will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Dish table -->
+            <div id="dishSection" class="bg-white p-4 rounded shadow hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Manage Dish</h2>
+                    <button onclick="openAddDishModal()"
+                        class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Add Dish</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-[500px] table-fixed w-full border-collapse">
+                        <thead class="bg-gray-100 text-left">
+                            <tr>
+                                <th class="p-2">Dish Name</th>
+                                <th class="p-2">Ingredients</th>
+                                <th class="p-2">Category</th>
+                                <th class="p-2">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="dishTableBody">
+                            <!-- Users will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="dishSummarySection" class="hidden p-4">
+                <h2 class="text-xl font-bold mb-4">Dish Summary</h2>
+                <div id="dishList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dish cards added via JS -->
+                </div>
+            </div>
+
+
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <!-- Add Item Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 px-4">
+        <div class="bg-white p-6 rounded shadow w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4">Add New Item</h3>
+            <form id="addItemForm">
+                <input type="text" id="itemName" placeholder="Item Name" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <select id="categoryDropdownInput" class="w-full mb-2 p-2 border rounded" required>
+                    <option value="">Select a category</option>
+                </select>
+
+                <input type="number" id="quantity" placeholder="Quantity" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <input type="text" id="unit" placeholder="Unit (e.g., Kg, L)" class="w-full mb-4 p-2 border rounded"
+                    required />
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="hideModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button type="submit" class="button-save  text-white px-4 py-2 rounded">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <!-- Add Category Modal -->
+    <div id="addCategoryModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 px-4">
+        <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-xl font-semibold mb-4">Add Category</h2>
+            <form id="categoryForm">
+                <label class="block mb-2 text-sm font-medium">Category Name</label>
+                <input id="categoryInput" type="text"
+                    class="w-full border border-gray-300 rounded p-2 mb-4 focus:outline-none focus:ring focus:border-blue-300"
+                    placeholder="Enter category name" />
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeAddCategoryModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Staff Modal -->
+    <div id="addStaffModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white w-full max-w-md p-6 rounded shadow">
+            <h3 class="text-lg font-bold mb-4">Add New Staff</h3>
+            <form id="addStaffForm">
+                <input type="text" id="staffName" placeholder="Full Name" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <input type="email" id="staffEmail" placeholder="Email" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <input type="text" id="staffPass" placeholder="Password" class="w-full mb-2 p-2 border rounded"
+                    required />
+                <input type="text" id="staffContact" placeholder="Contact Number" class="w-full mb-2 p-2 border rounded"
+                    required />
+
+                <select id="staffRole" class="w-full mb-4 p-2 border rounded" required>
+                    <option value="">Select Role</option>
+                    <option value="Staff">Staff</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Admin">Admin</option>
+                </select>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeAddStaffModal()"
+                        class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button type="submit"
+                        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Dish Modal -->
+    <div id="addDishModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-white p-6 rounded shadow-md w-full max-w-xl">
+            <h2 class="text-xl font-semibold mb-4">Add New Dish</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="dishName" class="block text-sm font-medium text-gray-700">Dish Name</label>
+                    <input type="text" id="dishName" class="w-full border px-3 py-2 rounded"
+                        placeholder="e.g., Spaghetti">
+                </div>
+
+                <div>
+                    <label for="dishCategory" class="block text-sm font-medium text-gray-700">Category</label>
+                    <select id="dishCategory" class="w-full border px-3 py-2 rounded">
+                        <option value="">Select category</option>
+                        <option value="Main Dish">Main Dish</option>
+                        <option value="Drink">Drink</option>
+                        <option value="Snack">Snack</option>
+                    </select>
+                </div>
+
+                <!-- Ingredients List -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ingredients</label>
+                    <div id="ingredientsContainer" class="space-y-2">
+                        <!-- Dynamic ingredient inputs will be added here -->
+                    </div>
+                    <button type="button" onclick="addIngredientInput()" class="text-blue-600 mt-2">+ Add
+                        Ingredient</button>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex justify-end mt-6 gap-3">
+                <button onclick="closeAddDishModal()" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+                <button onclick="saveDish()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save
+                    Dish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dish Order Modal -->
+    <div id="dishOrderModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h3 id="modalDishName" class="text-xl font-semibold mb-4 text-center">Order Dish</h3>
+
+            <label for="orderQuantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+            <input type="number" id="orderQuantity" min="1" max="9" maxlength="1" oninput="limitToOneDigit(this)"
+                class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-green-400"
+                placeholder="Enter quantity (1-9)" />
+
+
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeDishModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                <button onclick="confirmDishOrder()"
+                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- error modal for not enough inventory -->
+    <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h3 class="text-xl font-semibold mb-4 text-red-600">Inventory Error</h3>
+            <p id="errorModalMessage" class="text-gray-700 mb-4"></p>
+            <div class="flex justify-end">
+                <button onclick="closeErrorModal()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- restocking modal -->
+
+    <!-- Restock Modal -->
+    <!-- <div id="restockModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h3 id="restockItemLabel" class="text-xl font-semibold mb-4 text-center">Restock Item</h3>
+
+            <label for="restockAmountInput" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+            <input type="number" id="restockAmountInput" min="0.01" step="0.01"
+                class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Enter amount to restock (e.g. 1.5)" />
+
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeRestockModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                <button onclick="confirmRestock()"
+                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
+            </div>
+        </div>
+    </div> -->
+
+    <!-- Restock Modal -->
+    <div id="restockModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h3 id="restockItemLabel" class="text-xl font-semibold mb-4 text-center">Restock Item</h3>
+
+            <!-- Amount Input -->
+            <label for="restockAmountInput" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+            <input type="number" id="restockAmountInput" min="0.01" step="0.01"
+                class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Enter amount to restock (e.g. 1.5)" />
+
+            <!-- Unit Select -->
+            <label for="restockUnitInput" class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+            <select id="restockUnitInput"
+                class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="Grams">Grams</option>
+                <option value="Kg">Kilograms</option>
+                <option value="Ml">Milliliters</option>
+                <option value="L">Liters</option>
+                <option value="pieces">Pieces</option>
+            </select>
+
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeRestockModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                <button onclick="confirmRestock()"
+                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Wastage Modal -->
+    <div id="wastageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 class="text-xl font-semibold mb-4">Mark Item as Wasted</h2>
+
+            <form id="wastageForm">
+                <input type="hidden" id="wasteKey">
+                <input type="hidden" id="wasteItemName">
+
+                <div class="mb-4">
+                    <label class="block text-gray-700">Quantity to Deduct</label>
+                    <input type="number" id="wasteQty" class="w-full border p-2 rounded" required min="1">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700">Unit</label>
+                    <select id="wasteUnit" class="w-full border p-2 rounded">
+                        <option value="Grams">Grams</option>
+                        <option value="Kg">Kilograms</option>
+                        <option value="Ml">Milliliters</option>
+                        <option value="L">Liters</option>
+                        <option value="pieces">Pieces</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700">Reason</label>
+                    <select id="wasteReason" class="w-full border p-2 rounded">
+                        <option value="Spoiled">Spoiled</option>
+                        <option value="Damaged">Damaged</option>
+                        <option value="Spilled">Spilled</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeWastageModal()"
+                        class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+
+
+
+
+    <script>
+
+        let selectedDishName = null;
+        let selectedDishId = null;
+
+
+        function showModal() {
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function hideModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+        function toggleSettings() {
+            const submenu = document.getElementById("settingsSubmenu");
+            submenu.classList.toggle("hidden");
+        }
+
+        function openAddStaffModal() {
+            document.getElementById("addStaffModal").classList.remove("hidden");
+            document.getElementById("addStaffModal").classList.add("flex");
+        }
+
+        function closeAddStaffModal() {
+            document.getElementById("addStaffModal").classList.add("hidden");
+            document.getElementById("addStaffModal").classList.remove("flex");
+        }
+
+
+        // function for dish Modal
+        function openAddDishModal() {
+            document.getElementById("addDishModal").classList.remove("hidden");
+            clearDishForm();
+            addIngredientInput(); // Add at least one input by default
+        }
+
+        function closeAddDishModal() {
+            document.getElementById("addDishModal").classList.add("hidden");
+        }
+
+
+
+        function clearDishForm() {
+            document.getElementById("dishName").value = "";
+            document.getElementById("dishCategory").value = "";
+            document.getElementById("ingredientsContainer").innerHTML = "";
+        }
+
+        function addIngredientInput() {
+            const container = document.getElementById("ingredientsContainer");
+            const ingredientId = `ingredient-${Date.now()}`; // unique ID
+
+            const ingredientRow = document.createElement("div");
+            ingredientRow.classList.add("flex", "gap-2");
+            ingredientRow.innerHTML = `
+                <input type="text" class="w-2/5 border px-2 py-1 rounded" placeholder="Ingredient Name">
+                <input type="number" class="w-1/5 border px-2 py-1 rounded" placeholder="Qty">
+                <input type="text" class="w-1/5 border px-2 py-1 rounded" placeholder="Unit">
+                <button type="button" onclick="this.parentElement.remove()" class="text-red-600">✖</button>
+            `;
+            container.appendChild(ingredientRow);
+        }
+
+
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.add('hidden');
+        }
+        function logout() {
+            document.getElementById('logoutModal').classList.remove('hidden');
+        }
+        function confirmLogout() {
+            document.getElementById("logoutModal").classList.add("hidden");
+            localStorage.removeItem("isLoggedIn");
+            window.location.href = "index.html";
+        }
+
+        // showing dish card modal for orders
+
+        // temporary variable to hold selected dish
+
+        function openDishModal(dishId, dishName) {
+            selectedDishId = dishId; // ✅ Correct global variable
+            selectedDishName = dishName;
+            document.getElementById("modalDishName").textContent = `Order: ${dishName}`;
+            document.getElementById("orderQuantity").value = "";
+            document.getElementById("dishOrderModal").classList.remove("hidden");
+        }
+
+
+        function closeDishModal() {
+            currentDishId = null;
+            document.getElementById("dishOrderModal").classList.add("hidden");
+            selectedDishName = null;
+        }
+
+
+        const modal = document.getElementById("addCategoryModal");
+
+        function openAddCategoryModal(event) {
+            event.preventDefault();
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            document.getElementById("categoryInput").value = ""; // clear input
+        }
+
+        function closeAddCategoryModal() {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        // Optional: close modal if user clicks outside the content
+        modal.addEventListener("click", function () {
+            closeAddCategoryModal();
+        });
+
+
+        // function for staff table showing
+
+        function hideAllSections() {
+            document.getElementById("inventorySection").classList.add("hidden");
+            document.getElementById("dishSection").classList.add("hidden");
+            document.getElementById("manageUserSection").classList.add("hidden");
+            document.getElementById("dishSummarySection").classList.add("hidden");
+        }
+
+        function showInventory() {
+            hideAllSections();
+            document.getElementById("inventorySection").classList.remove("hidden");
+        }
+
+
+        function limitToOneDigit(input) {
+            let value = input.value;
+
+            // Remove non-digit characters
+            value = value.replace(/\D/g, '');
+
+            // If user enters more than 1 digit, trim to the first digit only
+            if (value.length > 1) {
+                value = value.slice(0, 1);
+            }
+
+            // Prevent '0'
+            if (value === "0") {
+                value = "";
+            }
+
+            input.value = value;
+        }
+
+        // error modal js
+        function showErrorModal(message) {
+            document.getElementById("errorModalMessage").textContent = message;
+            document.getElementById("errorModal").classList.remove("hidden");
+        }
+
+        function closeErrorModal() {
+            document.getElementById("errorModal").classList.add("hidden");
+        }
+
+
+        // open and close restock model
+
+        let restockItemKey = "";        // global
+        let restockItemName = "";
+        let restockCurrentQty = 0;
+        let restockUnit = "";
+
+        function openRestockModal(key, itemName, currentQty, unit) {
+            restockItemKey = key;
+            restockItemName = itemName;
+            restockCurrentQty = currentQty;
+            restockUnit = unit;
+
+            document.getElementById("restockItemLabel").textContent = `Restock: ${itemName}`;
+            document.getElementById("restockAmountInput").value = "";
+            document.getElementById("restockUnitInput").value = unit;
+
+            document.getElementById("restockModal").classList.remove("hidden");
+        }
+
+
+        function closeRestockModal() {
+            document.getElementById("restockModal").classList.add("hidden");
+        }
+
+
+        // Unit conversion functions
+        function convertToGrams(value, unit) {
+            unit = unit.toLowerCase();
+            if (unit === "kg" || unit === "l") return value * 1000;
+            if (unit === "grams" || unit === "g") return value;
+            return value; // fallback
+        }
+
+        function convertFromGrams(value, unit) {
+            unit = unit.toLowerCase();
+            if (unit === "kg" || unit === "l") return value / 1000;
+            if (unit === "grams" || unit === "g") return value;
+            return value; // fallback
+        }
+
+
+        // wastage script 
+
+        function openWastageModal(key, itemName, currentQty, unit) {
+            document.getElementById('wastageModal').classList.remove('hidden');
+            document.getElementById('wasteKey').value = key;
+            document.getElementById('wasteItemName').value = itemName;
+            document.getElementById('wasteQty').max = currentQty;
+            document.getElementById('wasteUnit').value = unit;
+
+            const convertedQty = convertToGrams(currentQty, unit); // or convertToPieces(), etc.
+
+            document.getElementById('wasteQty').value = '';
+            document.getElementById('wasteQty').max = convertedQty;
+        }
+
+
+        function closeWastageModal() {
+            document.getElementById('wastageModal').classList.add('hidden');
+        }
+
+        document.getElementById('wastageForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const key = document.getElementById('wasteKey').value;
+            const name = document.getElementById('wasteItemName').value;
+            const qty = parseFloat(document.getElementById('wasteQty').value);
+            const unit = document.getElementById('wasteUnit').value;
+            const reason = document.getElementById('wasteReason').value;
+
+            try {
+                await deductWastage(key, name, qty, unit, reason);
+                alert("✅ Wastage recorded successfully!");
+                closeWastageModal();
+            } catch (err) {
+                alert("❌ Error: " + err.message);
+            }
+        });
+
+        function convertBetweenUnits(value, fromUnit, toUnit) {
+            const unitMap = {
+                grams: 1,
+                g: 1,
+                kilograms: 1000,
+                kg: 1000,
+                milliliters: 1,
+                ml: 1,
+                liters: 1000,
+                l: 1000,
+                pieces: 1,
+                pcs: 1
+            };
+
+            const from = fromUnit.trim().toLowerCase();
+            const to = toUnit.trim().toLowerCase();
+
+            if (from === to) return value;
+
+            if (!unitMap[from] || !unitMap[to]) {
+                throw new Error(`Unsupported unit conversion: ${fromUnit} to ${toUnit}`);
+            }
+
+            const baseValue = value * unitMap[from];   // Convert to base unit (grams/ml/pieces)
+            const result = baseValue / unitMap[to];    // Convert to target unit
+
+            return result;
+        }
+
+
+
+
+
+
+
+
+        document.getElementById('addItemForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+        });
+    </script>
+    <script type="module">
+
+        // import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        // import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        // import { get, ref as dbRef } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        // import { getDatabase, ref, update, get, onValue, push } from "firebase/database";
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import {
+            getDatabase,
+            ref,
+            update,
+            get,
+            onValue,
+            push,
+            set
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAirT0VzOc7Bzcsj3oV5_9PQS8f990uzwo",
+            authDomain: "lebistro-9be16.firebaseapp.com",
+            projectId: "lebistro-9be16",
+            storageBucket: "lebistro-9be16.firebasestorage.app",
+            messagingSenderId: "115040507366",
+            appId: "1:115040507366:web:3281b19470f482cff0f227"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const database = getDatabase(app);
+
+        signInAnonymously(auth)
+            .then(() => {
+                console.log("Signed in anonymously ✅");
+                // Now you can read/write from the database
+            })
+            .catch((error) => {
+                console.error("Anonymous sign-in error:", error);
+            });
+
+        const form = document.getElementById('addItemForm');
+        const inventoryRef = ref(database, "Inventory");
+        const tbody = document.getElementById("inventoryBody");
+        const categoryDropdown = document.getElementById("categoryFilter");
+        const searchInput = document.getElementById("searchInput");
+        const tabButtons = document.querySelectorAll(".tab-button");
+
+        let currentFilter = "all";
+        let currentCategory = "All";
+        let currentSearch = "";
+        let items = []; // Store fetched items
+
+        // 🔁 Listen for tab click
+        tabButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                currentFilter = btn.dataset.filter;
+                tabButtons.forEach((b) => b.classList.remove("active-tab"));
+                btn.classList.add("active-tab");
+                renderTable(); // Apply all filters
+            });
+        });
+
+        // 🔁 Listen to category dropdown
+        categoryDropdown.addEventListener("change", () => {
+            currentCategory = categoryDropdown.value;
+            renderTable();
+        });
+
+        // 🔁 Search input listener
+        searchInput.addEventListener("input", () => {
+            currentSearch = searchInput.value.toLowerCase();
+            renderTable();
+        });
+
+        // save dish in firebase
+
+        window.saveDish = function () {
+
+
+            const name = document.getElementById("dishName").value;
+            const category = document.getElementById("dishCategory").value;
+            const ingredients = [];
+
+            const ingredientRows = document.querySelectorAll("#ingredientsContainer > div");
+            ingredientRows.forEach(row => {
+                const inputs = row.querySelectorAll("input");
+                const ingredient = {
+                    name: inputs[0].value,
+                    quantity: parseFloat(inputs[1].value),
+                    unit: inputs[2].value
+                };
+                if (ingredient.name && ingredient.quantity && ingredient.unit) {
+                    ingredients.push(ingredient);
+                }
+            });
+
+            if (!name || !category || ingredients.length === 0) {
+                alert("Please fill out all fields.");
+                return;
+            }
+
+            const dishRef = ref(database, 'Dish');
+            const newDishRef = push(dishRef);
+
+            set(newDishRef, {
+                dishName: name,
+                category: category,
+                ingredients: ingredients
+            })
+                .then(() => {
+                    alert("✅ Dish saved successfully!");
+                    closeAddDishModal();
+                })
+                .catch(error => {
+                    console.error("❌ Error saving dish:", error);
+                    alert("Failed to save dish.");
+                });
+        }
+
+        // show Dishes in table
+
+        function loadDishes() {
+            const dishRef = ref(database, 'Dish');
+
+            onValue(dishRef, (snapshot) => {
+                const dishTableBody = document.getElementById("dishTableBody");
+                dishTableBody.innerHTML = '';
+
+                if (snapshot.exists()) {
+                    const dishes = snapshot.val();
+
+                    Object.keys(dishes).forEach(dishId => {
+                        const dish = dishes[dishId];
+
+                        // Top dish row
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+          <td class="p-2 font-semibold">${dish.dishName}</td>
+          <td class="p-2 space-x-2">
+            <button onclick="toggleIngredients('${dishId}')" class="text-green-600 hover:underline">View</button>
+          </td>
+          <td class="p-2">${dish.category}</td>
+          <td class="p-2 space-x-2">
+            
+            <button onclick="editDish('${dishId}')" class="text-blue-600 hover:underline">Edit</button>
+            <button onclick="deleteDish('${dishId}')" class="text-red-600 hover:underline">Delete</button>
+          </td>
+        `;
+                        dishTableBody.appendChild(row);
+
+                        // Collapsible ingredient table row (hidden by default)
+                        const ingredientRow = document.createElement('tr');
+                        ingredientRow.id = `ingredients-${dishId}`;
+                        ingredientRow.classList.add('hidden');
+                        ingredientRow.innerHTML = `
+          <td colspan="3" class="p-3 bg-gray-50">
+            <div>
+              <strong class="text-gray-700">Ingredients:</strong>
+              <table class="w-full text-sm mt-2 border">
+                <thead class="bg-gray-200">
+                  <tr>
+                    <th class="text-left p-1 border">Name</th>
+                    <th class="text-left p-1 border">Quantity</th>
+                    <th class="text-left p-1 border">Unit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${dish.ingredients.map(ing => `
+                    <tr>
+                      <td class="p-1 border">${ing.name}</td>
+                      <td class="p-1 border">${ing.quantity}</td>
+                      <td class="p-1 border">${ing.unit}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </td>
+        `;
+                        dishTableBody.appendChild(ingredientRow);
+                    });
+
+                } else {
+                    dishTableBody.innerHTML = `
+        <tr><td colspan="3" class="p-2 text-center text-gray-500">No dishes found.</td></tr>
+      `;
+                }
+            });
+        }
+
+
+        window.toggleIngredients = function (dishId) {
+            const row = document.getElementById(`ingredients-${dishId}`);
+            row.classList.toggle('hidden');
+        };
+
+        window.showDishSection = function () {
+            hideAllSections();
+            document.getElementById("dishSection").classList.remove("hidden");
+            loadDishes();
+        };
+
+        // 🧠 Save item
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const itemName = document.getElementById('itemName').value.trim();
+            const category = document.getElementById('categoryDropdownInput').value;
+            const quantity = parseInt(document.getElementById('quantity').value.trim());
+            const unit = document.getElementById('unit').value.trim();
+
+            if (!itemName || !category || !quantity || !unit) return alert('All fields are required!');
+
+            const newItemRef = push(inventoryRef);
+
+            set(newItemRef, {
+                itemName,
+                category,
+                quantity,
+                originalQuantity: quantity,
+                unit
+            }).then(() => {
+                alert('✅ Item saved successfully!');
+                form.reset();
+            }).catch(err => {
+                console.error('Error saving data:', err);
+                alert('Failed to save item.');
+            });
+        });
+
+
+        // adding staff into firebase
+
+        const staffForm = document.getElementById("addStaffForm");
+
+        staffForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById("staffName").value.trim();
+            const email = document.getElementById("staffEmail").value.trim();
+            const pass = document.getElementById("staffPass").value.trim();
+            const contact = document.getElementById("staffContact").value.trim();
+            const role = document.getElementById("staffRole").value;
+
+            if (!name || !email || !pass || !contact || !role) {
+                alert("Please fill out all fields.");
+                return;
+            }
+
+            const staffRef = ref(database, "Staff");
+            const newStaffRef = push(staffRef);
+
+            set(newStaffRef, {
+                name,
+                pass,
+                email,
+                contact,
+                role,
+                status: "Active" // Default
+            }).then(() => {
+                alert("✅ Staff added successfully!");
+                staffForm.reset();
+                closeAddStaffModal();
+                loadUsers(); // Refresh table
+            }).catch((error) => {
+                console.error("Error adding staff:", error);
+                alert("❌ Failed to add staff.");
+            });
+        });
+
+
+        // show staff into the table
+        function loadUsers() {
+            const staffRef = ref(database, "Staff");
+
+            onValue(staffRef, (snapshot) => {
+                const userTableBody = document.getElementById("userTableBody");
+                userTableBody.innerHTML = ""; // Clear previous rows
+
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const staff = childSnapshot.val();
+                        const staffKey = childSnapshot.key;
+
+                        const row = document.createElement("tr");
+
+                        row.innerHTML = `
+          <td class="p-2">${staff.name}</td>
+          <td title="${staff.email}" class="truncate max-w-[100px]">${staff.email}</td>
+          <td class="p-2">${staff.role}</td>
+          <td class="p-2">${staff.status || "Active"}</td>
+          <td class="p-2">
+            <button class="text-blue-600 hover:underline" onclick="editStaff('${staffKey}')">Edit</button>
+            <button class="text-red-600 hover:underline" onclick="deleteStaff('${staffKey}')">Delete</button>
+          </td>
+        `;
+
+                        userTableBody.appendChild(row);
+                    });
+                } else {
+                    userTableBody.innerHTML = `
+        <tr><td colspan="5" class="text-center py-4 text-gray-500">No staff found.</td></tr>
+      `;
+                }
+            });
+        }
+
+        function showManageUsers() {
+            hideAllSections();
+            console.log("Show manage user clicked");
+            document.getElementById("inventorySection").classList.add("hidden");
+            document.getElementById("manageUserSection").classList.remove("hidden");
+            loadUsers();
+        }
+
+
+        // 🔁 Load data ONCE and keep in memory
+        onValue(inventoryRef, (snapshot) => {
+            items = [];
+            snapshot.forEach((childSnapshot) => {
+                items.push(childSnapshot.val());
+            });
+            renderTable(); // Initial render
+        });
+
+        // 📋 Render with all filters applied
+        function renderTable() {
+            tbody.innerHTML = "";
+
+            Object.entries(items).forEach(([key, item]) => {
+                const original = item.originalQuantity || item.quantity;
+                const isLowStock = item.quantity > 0 && item.quantity <= original * 0.3;
+                const isOutOfStock = item.quantity === 0;
+
+                // 🔎 Filtering logic
+                const matchesTab = (
+                    currentFilter === "all" ||
+                    (currentFilter === "low" && isLowStock) ||
+                    (currentFilter === "out" && isOutOfStock)
+                );
+
+                const matchesCategory =
+                    currentCategory === "All" || item.category === currentCategory;
+
+                // const matchesSearch = item.itemName.toLowerCase().includes(currentSearch);
+                const matchesSearch = (item.itemName || "").toLowerCase().includes(currentSearch);
+
+
+                if (!(matchesTab && matchesCategory && matchesSearch)) return;
+
+                // 🏷️ Badge
+                let stockLabel = "";
+                if (isOutOfStock) {
+                    stockLabel = `<span class="text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded-full">Out of Stock</span>`;
+                } else if (isLowStock) {
+                    stockLabel = `<span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">Low Stock</span>`;
+                }
+
+                // ➕ Create row
+                const tr = document.createElement("tr");
+                tr.classList.add("border-b");
+
+                tr.innerHTML = `
+                    <td class="p-2">${item.itemName}</td>
+                    <td class="p-2">${item.category}</td>
+                    <td class="p-2">${item.quantity} ${stockLabel}</td>
+                    <td class="p-2">${item.unit}</td>
+                    <td class="p-2">
+                       <button class="text-black mr-2 rounded hover:underline"
+                            onclick="openRestockModal('${key}', '${item.itemName}', ${item.quantity}, '${item.unit}')">
+                            Restock
+                       </button>
+                       <button class="text-red-500 hover:underline"
+                            onclick="openWastageModal('${key}', '${item.itemName}', ${item.quantity}, '${item.unit}')">
+                            Wastage
+                        </button>
+                    </td>
+                    `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        onValue(inventoryRef, (snapshot) => {
+            items = {};
+            let total = 0;
+            let lowStock = 0;
+            let outOfStock = 0;
+
+            snapshot.forEach((childSnapshot) => {
+                const item = childSnapshot.val();
+
+                const key = childSnapshot.key;
+
+                items[key] = item; // ✅ save using Firebase key as object key
+                total++;
+
+                const original = item.originalQuantity || item.quantity;
+
+                if (item.quantity === 0) {
+                    outOfStock++;
+                } else if (item.quantity <= original * 0.3) {
+                    lowStock++;
+                }
+            });
+
+            // 👇 Update counts on the dashboard
+            document.getElementById("totalItems").textContent = total;
+            document.getElementById("lowStockCount").textContent = lowStock;
+            document.getElementById("outOfStockCount").textContent = outOfStock;
+
+            // If you have recipes logic, replace the line below
+
+            const db = getDatabase(app);
+            const dishRef = ref(db, "Dish");
+
+
+            onValue(dishRef, (snapshot) => {
+                let dishCount = 0;
+
+                if (snapshot.exists()) {
+                    snapshot.forEach((child) => {
+                        const dish = child.val();
+
+                        // Count only if it has a valid name and ingredients (optional check)
+                        if (dish.dishName && Array.isArray(dish.ingredients) && dish.ingredients.length > 0) {
+                            dishCount++;
+                        }
+                    });
+                }
+
+                document.getElementById("dishesWithRecipes").textContent = dishCount;
+            });
+
+
+            // Render the filtered table after counting
+            renderTable();
+        });
+
+        const Categoryform = document.getElementById("categoryForm");
+
+        Categoryform.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const categoryName = document.getElementById("categoryInput").value.trim();
+
+            if (!categoryName) {
+                alert("Please enter a category name.");
+                return;
+            }
+
+            const categoryListRef = ref(database, "Category");
+            const newCategoryRef = push(categoryListRef);
+
+            set(newCategoryRef, { name: categoryName })
+                .then(() => {
+                    alert("✅ Category saved successfully!");
+                    Categoryform.reset();
+                    // closeAddCategoryModal();
+                })
+                .catch((err) => {
+                    console.error("Error saving category:", err);
+                    alert("❌ Failed to save category.");
+                });
+        });
+
+
+        function closeAddCategoryModal() {
+            const modal = document.getElementById("addCategoryModal");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        function openAddCategoryModal(event) {
+            event.preventDefault();
+            const modal = document.getElementById("addCategoryModal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            document.getElementById("categoryInput").value = "";
+        }
+
+        const categoryDropdowns = document.getElementById("categoryDropdownInput");
+
+        function loadCategories() {
+            const categoryRef = ref(database, "Category");
+
+            onValue(categoryRef, (snapshot) => {
+                const data = snapshot.val();
+
+                // Get both dropdown elements
+                const modalDropdown = document.getElementById("categoryDropdownInput");
+                const filterDropdown = document.getElementById("categoryFilter");
+
+                // Clear previous options
+                modalDropdown.innerHTML = '<option value="">Select a category</option>';
+                filterDropdown.innerHTML = '<option value="All">All Categories</option>';
+
+                if (data) {
+                    Object.entries(data).forEach(([key, value]) => {
+                        const option1 = document.createElement("option");
+                        option1.value = value.name;
+                        option1.textContent = value.name;
+                        modalDropdown.appendChild(option1);
+
+                        const option2 = document.createElement("option");
+                        option2.value = value.name;
+                        option2.textContent = value.name;
+                        filterDropdown.appendChild(option2);
+                    });
+                }
+            });
+        }
+
+
+        function showModal() {
+            const modal = document.getElementById("modal");
+            modal.classList.remove("hidden");
+            loadCategories(); // Load categories when modal opens
+        }
+
+        // show dishes cards
+
+        function loadDishCards() {
+            const db = getDatabase(app);
+            const dishRef = ref(db, "Dish");
+
+            onValue(dishRef, snapshot => {
+                const dishList = document.getElementById("dishList");
+                dishList.innerHTML = ""; // Clear previous cards
+
+                if (snapshot.exists()) {
+                    snapshot.forEach(dishSnap => {
+                        const dish = dishSnap.val();
+                        const dishName = dish.dishName;
+
+                        const card = document.createElement("div");
+                        card.className = "p-4 bg-white rounded shadow hover:bg-green-100 cursor-pointer transition";
+
+
+                        card.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-800">${dishName}</h3>
+                            </div>
+                            <p class="text-sm text-gray-500">${dish.category || "Uncategorized"}</p>
+                            <p class="text-xs text-green-600 mt-2 italic">Click to record order</p>
+                        `;
+
+                        card.onclick = () => openDishModal(dishSnap.key, dishName);
+
+                        dishList.appendChild(card);
+                    });
+                } else {
+                    dishList.innerHTML = "<p class='text-gray-500'>No dishes found.</p>";
+                }
+            }, {
+                onlyOnce: false // This makes sure it keeps listening for changes
+            });
+        }
+
+
+        async function confirmDishOrder() {
+            const quantity = parseInt(document.getElementById("orderQuantity").value);
+            const staffName = localStorage.getItem("userFullName") || "Unknown Staff";
+
+            if (!quantity || quantity < 1 || quantity > 9) {
+                alert("Please enter a valid quantity between 1 and 9.");
+                return;
+            }
+
+            try {
+                // Deduct from inventory first
+                await orderDish(selectedDishId, quantity);  // <- run deduction here
+
+                // If successful, proceed to save the order
+                const timestamp = new Date().toISOString();
+                const orderData = {
+                    dishName: selectedDishName,
+                    quantity,
+                    timestamp,
+                    processBy: staffName
+                };
+
+                const db = getDatabase(app);
+                const orderRef = ref(db, "Orders");
+
+                await push(orderRef, orderData);
+
+                alert(`✅ ${quantity} ${selectedDishName} order(s) recorded.`);
+                closeDishModal();
+
+            } catch (error) {
+                console.error("Order process failed:", error);
+                // alert("❌ Failed to complete order. Possibly not enough ingredients.");
+            }
+        }
+
+
+        function ViewDishes() {
+            hideAllSections();
+            document.getElementById("inventorySection").classList.add("hidden");
+            document.getElementById("dishSummarySection").classList.remove("hidden");
+
+            loadDishCards(); // fetch and display data
+        }
+
+        // code for deducting the order from inventory
+
+        async function orderDish(dishId, quantity) {
+            const db = getDatabase();
+
+            console.log("orderDish called with dishId:", dishId, "quantity:", quantity);
+
+            const dishSnapshot = await get(ref(db, `Dish/${dishId}`));
+            if (!dishSnapshot.exists()) {
+                console.error("Dish not found.");
+                throw new Error("Dish not found.");
+            }
+
+            const dishData = dishSnapshot.val();
+            const ingredients = dishData.ingredients;
+
+            const inventorySnapshot = await get(ref(db, "Inventory"));
+            const inventoryData = inventorySnapshot.val();
+
+            const insufficient = [];
+
+            // 1. First pass: check for all insufficient items
+            for (const ingredient of ingredients) {
+                const { name, quantity: usedQuantity, unit: dishUnit } = ingredient;
+                const usedQtyInGrams = convertToGrams(usedQuantity, dishUnit) * quantity;
+
+                const matchedKey = Object.keys(inventoryData).find(key =>
+                    inventoryData[key].itemName.toLowerCase().includes(name.toLowerCase())
+                );
+
+                if (!matchedKey) {
+                    console.warn(`Ingredient "${name}" not found in inventory.`);
+                    continue;
+                }
+
+                const item = inventoryData[matchedKey];
+                const invUnit = item.unit;
+                const invQuantity = item.quantity;
+                const invQtyInGrams = convertToGrams(invQuantity, invUnit);
+
+                if (invQtyInGrams < usedQtyInGrams) {
+                    insufficient.push(name);
+                }
+
+            }
+
+            // 2. Stop everything if any are insufficient
+            if (insufficient.length > 0) {
+                const message = `⚠️ Low stock alert cannot complete order. Not enough stock for:\n- ${insufficient.join("\n- ")}`;
+                showErrorModal(message);
+                throw new Error("Insufficient stock for: " + insufficient.join(", "));
+            }
+
+            // 3. Second pass: now calculate updates because all ingredients are sufficient
+            const updates = {};
+
+            for (const ingredient of ingredients) {
+                const { name, quantity: usedQuantity, unit: dishUnit } = ingredient;
+                const usedQtyInGrams = convertToGrams(usedQuantity, dishUnit) * quantity;
+
+                const matchedKey = Object.keys(inventoryData).find(key =>
+                    inventoryData[key].itemName.toLowerCase().includes(name.toLowerCase())
+                );
+
+                const item = inventoryData[matchedKey];
+                const invUnit = item.unit;
+                const invQuantity = item.quantity;
+                const invQtyInGrams = convertToGrams(invQuantity, invUnit);
+
+                const newQtyInGrams = invQtyInGrams - usedQtyInGrams;
+                const newQtyInOriginalUnit = convertFromGrams(newQtyInGrams, invUnit);
+
+                updates[`Inventory/${matchedKey}/quantity`] = newQtyInOriginalUnit;
+            }
+
+            // 4. Apply updates safely
+            await update(ref(db), updates);
+            console.log("✅ Inventory updated after ordering dish.");
+        }
+
+
+        // restock code saving to firebase
+
+        // async function confirmRestock() {
+        //     const amount = parseFloat(document.getElementById("restockAmountInput").value);
+
+        //     if (isNaN(amount) || amount <= 0) {
+        //         alert("Please enter a valid restock amount.");
+        //         return;
+        //     }
+
+        //     const db = getDatabase();
+        //     const itemRef = ref(db, `Inventory/${restockItemKey}`);
+
+        //     try {
+        //         // 1. Read existing inventory item first
+        //         const snapshot = await get(itemRef);
+        //         console.log("Restock item key:", restockItemKey);
+        //         console.log("Item ref path:", `Inventory/${restockItemKey}`);
+
+        //         if (!snapshot.exists()) {
+        //             alert("❌ Item not found in inventory.");
+        //             return;
+        //         }
+
+        //         const itemData = snapshot.val();
+        //         const updatedQuantity = itemData.quantity + amount;
+        //         const updatedOriginalQty = (itemData.originalQuantity || itemData.quantity) + amount;
+
+        //         // 2. Update Inventory
+        //         await update(itemRef, {
+        //             quantity: updatedQuantity,
+        //             originalQuantity: updatedOriginalQty
+        //         });
+
+        //         // 3. Save to RestockHistory
+        //         const staffName = localStorage.getItem("userFullName") || "Unknown Staff";
+        //         const restockData = {
+        //             itemName: restockItemName,
+        //             amountAdded: amount,
+        //             unit: restockUnit,
+        //             restockedBy: staffName,
+        //             timestamp: new Date().toISOString()
+        //         };
+
+        //         await push(ref(db, "RestockHistory"), restockData);
+
+        //         alert(`✅ ${amount} ${restockUnit} of ${restockItemName} restocked successfully.`);
+        //         closeRestockModal();
+
+        //     } catch (error) {
+        //         console.error("Restock failed:", error);
+        //         alert("❌ Failed to restock item.");
+        //     }
+        // }
+        async function confirmRestock() {
+            const amount = parseFloat(document.getElementById("restockAmountInput").value);
+            const inputUnit = document.getElementById("restockUnitInput").value;
+
+            if (isNaN(amount) || amount <= 0) {
+                alert("Please enter a valid restock amount.");
+                return;
+            }
+
+            const db = getDatabase();
+            const itemRef = ref(db, `Inventory/${restockItemKey}`);
+
+            try {
+                console.log("🧪 Restocking:", amount, inputUnit);
+                console.log("➡️ Inventory key:", restockItemKey);
+
+                const snapshot = await get(itemRef);
+                if (!snapshot.exists()) {
+                    alert("❌ Item not found in inventory.");
+                    return;
+                }
+
+                const itemData = snapshot.val();
+                console.log("📦 Current Inventory Item:", itemData);
+
+                const inventoryQuantity = itemData.quantity;
+                const inventoryUnit = itemData.unit;
+
+                console.log("💡 Existing Qty:", inventoryQuantity, inventoryUnit);
+
+                // 🔄 Convert to same unit
+                const convertedAmount = convertBetweenUnits(amount, inputUnit, inventoryUnit);
+                console.log("✅ Converted Amount to Match Unit:", convertedAmount);
+
+                const updatedQuantity = inventoryQuantity + convertedAmount;
+                const updatedOriginalQty = (itemData.originalQuantity || inventoryQuantity) + convertedAmount;
+
+                // ⚠️ Ensure values are not NaN
+                if (isNaN(updatedQuantity)) throw new Error("Invalid updated quantity");
+
+                await update(itemRef, {
+                    quantity: updatedQuantity,
+                    originalQuantity: updatedOriginalQty
+                    // DO NOT update the unit here — keep it consistent
+                });
+
+                const staffName = localStorage.getItem("userFullName") || "Unknown Staff";
+                const restockData = {
+                    itemName: restockItemName,
+                    amountAdded: amount,
+                    unit: inputUnit,
+                    restockedBy: staffName,
+                    timestamp: new Date().toISOString()
+                };
+
+                await push(ref(db, "RestockHistory"), restockData);
+
+                alert(`✅ ${amount} ${inputUnit} of ${restockItemName} restocked successfully.`);
+                closeRestockModal();
+
+            } catch (error) {
+                console.error("Restock failed:", error); // 👈 this will now show full error
+                alert("❌ Failed to restock item. See console for details.");
+            }
+        }
+
+        // function for wastage
+
+        async function deductWastage(itemKey, itemName, quantity, unit, reason) {
+            const db = getDatabase();
+
+            const itemRef = ref(db, `Inventory/${itemKey}`);
+            const itemSnapshot = await get(itemRef);
+
+            if (!itemSnapshot.exists()) {
+                console.error(`Item "${itemKey}" not found in inventory.`);
+                throw new Error("Item not found in inventory.");
+            }
+
+            const item = itemSnapshot.val();
+            const currentQty = item.quantity;
+            const currentUnit = item.unit;
+
+            const deductInGrams = convertToGrams(quantity, unit);
+            const currentInGrams = convertToGrams(currentQty, currentUnit);
+
+            if (deductInGrams > currentInGrams) {
+                console.error("Cannot deduct more than available stock.");
+                throw new Error("Not enough stock to deduct.");
+            }
+
+            const newQtyInGrams = currentInGrams - deductInGrams;
+            const newQtyInOriginalUnit = convertFromGrams(newQtyInGrams, currentUnit);
+
+            // Update inventory
+            const updates = {};
+            updates[`Inventory/${itemKey}/quantity`] = newQtyInOriginalUnit;
+
+            // Save to wastage logs
+            const wastageRef = push(ref(db, "WastageLogs"));
+            const logData = {
+                itemName,
+                deductedQuantity: quantity,
+                unit,
+                reason,
+                date: new Date().toISOString()
+            };
+
+            await Promise.all([
+                update(ref(db), updates),
+                set(wastageRef, logData)
+            ]);
+
+            console.log("✅ Wastage deducted and logged successfully.");
+        }
+
+        loadCategories();
+        renderTable();
+
+        window.showManageUsers = showManageUsers;
+        window.loadUsers = loadUsers;
+
+        window.ViewDishes = ViewDishes;
+        window.loadDishCards = loadDishCards;
+
+        window.confirmDishOrder = confirmDishOrder;
+        window.confirmRestock = confirmRestock;
+
+        window.deductWastage = deductWastage;
+
+    </script>
+
+
+
+</body>
+<script src="js/tab.js"></script>
+
+</html>
