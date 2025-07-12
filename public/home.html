@@ -68,7 +68,7 @@
                                 Current Stocks
                             </a>
 
-                            <a href="#" onclick="" class="block p-2 rounded hover:bg-green-100 text-sm"
+                            <a href="#" onclick="showRestockLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
                                 data-role="admin-only">
                                 Restock History
                             </a>
@@ -160,7 +160,7 @@
                     <div x-show="openInventories" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
                         <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100 text-sm"
                             data-role="admin-only">Current Stocks</a>
-                        <a href="#" onclick="" class="block p-2 rounded hover:bg-green-100 text-sm"
+                        <a href="#" onclick="showRestockLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
                             data-role="admin-only">Restock History</a>
                         <a href="#" onclick="showWasteLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
                             data-role="admin-only">Wastage Logs</a>
@@ -389,7 +389,6 @@
             </div>
 
             <!-- table for waste logs -->
-
             <div id="wastageLogsSection" class="bg-white p-4 rounded shadow mt-6 hidden">
                 <h2 class="text-xl font-semibold mb-4">Wastage Logs</h2>
 
@@ -416,6 +415,31 @@
                 </div>
             </div>
 
+            <!-- table for restocks -->
+            <div id="restockLogsSection" class="bg-white p-4 rounded shadow mt-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">Restock History</h2>
+
+                <!-- Tabs -->
+                <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
+                </div>
+
+                <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <table class="min-w-[800px] table-fixed w-full border-collapse">
+                        <thead class="bg-red-100 sticky top-0">
+                            <tr>
+                                <th class="p-2 text-left">Item Name</th>
+                                <th class="p-2 text-left">Quantity</th>
+                                <th class="p-2 text-left">Unit</th>
+                                <th class="p-2 text-left">In-Charge</th>
+                                <th class="p-2 text-left">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="restockLogsBody">
+                            <!-- Logs will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
         </main>
     </div>
@@ -797,6 +821,7 @@
             document.getElementById("manageUserSection").classList.add("hidden");
             document.getElementById("dishSummarySection").classList.add("hidden");
             document.getElementById("wastageLogsSection").classList.add("hidden");
+            document.getElementById("restockLogsSection").classList.add("hidden");
         }
 
         function lowStock() {
@@ -1929,6 +1954,45 @@
         }
 
 
+        function loadRestockLogs() {
+            const db = getDatabase();
+            const logsRef = ref(db, "RestockHistory");
+
+            const tbody = document.getElementById("restockLogsBody");
+            tbody.innerHTML = "";
+
+            onValue(logsRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    tbody.innerHTML = "<tr><td colspan='6' class='p-4 text-center text-gray-500'>No Restock logs found.</td></tr>";
+                    return;
+                }
+
+                snapshot.forEach(logSnap => {
+                    const log = logSnap.val();
+
+                    const tr = document.createElement("tr");
+                    tr.classList.add("border-b");
+
+                    tr.innerHTML = `
+                <td class="p-2">${log.itemName || "-"}</td>
+                <td class="p-2">${log.amountAdded || "-"}</td>
+                <td class="p-2">${log.unit || "-"}</td>
+                <td class="p-2">${log.restockedBy || "Unknown"}</td>
+                <td class="p-2">${new Date(log.timestamp).toLocaleString()}</td>
+            `;
+
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function showRestockLogs() {
+            hideAllSections();
+            document.getElementById("restockLogsSection").classList.remove("hidden");
+            loadRestockLogs();
+        }
+
+
 
 
         loadCategories();
@@ -1950,6 +2014,8 @@
 
         window.showWasteLogs = showWasteLogs;
         window.loadWastageLogs = loadWastageLogs;
+
+        window.showRestockLogs = showRestockLogs;
 
     </script>
 
