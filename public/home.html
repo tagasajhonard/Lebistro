@@ -46,10 +46,41 @@
     <div class="flex flex-col lg:flex-row min-h-screen">
         <aside class="bg-white shadow-lg p-5 space-y-6 w-full lg:w-64 hidden lg:block">
             <h1 class="text-2xl font-bold nav">Navigation</h1>
-            <nav class="space-y-3" x-data="{ openSettings: false }">
-                <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
+            <nav class="space-y-3" x-data="{ openInventory: false, openSettings: false }">
+                <a href="#" onclick="lowStock()" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
                 <a href="#" onclick="ViewDishes()" class="block p-2 rounded hover:bg-green-100">View Dishes</a>
-                <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
+                <div>
+                    <button @click="openInventory = !openInventory"
+                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+                        <span>Inventory</span>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transform transition-transform duration-200"
+                            :class="openInventory ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div>
+                        <div x-show="openInventory" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+                            <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Current Stocks
+                            </a>
+
+                            <a href="#" onclick="" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Restock History
+                            </a>
+
+                            <a href="#" onclick="showWasteLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                                data-role="admin-only">
+                                Wastage Logs
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Settings with submenu -->
                 <div>
@@ -89,7 +120,8 @@
 
 
         <!-- Logout Confirmation Modal -->
-        <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden px-4">
+        <div id="logoutModal"
+            class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden px-4">
             <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
                 <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
                 <p class="mb-6">Are you sure you want to logout?</p>
@@ -109,13 +141,31 @@
 
         <!-- Sidebar for mobile -->
         <aside id="mobileSidebar" class="bg-white w-full lg:hidden hidden p-2 space-y-2 shadow-md">
-            <!-- sidebar links -->
-            <nav class="space-y-2" x-data="{ openSettings: false }">
-                <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
+            <nav class="space-y-2" x-data="{ openSettings: false, openInventories: false }">
+                <a href="#" onclick="lowStock()" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
                 <a href="#" onclick="ViewDishes()" class="block p-2 rounded hover:bg-green-100">View Dishes</a>
-                <a href="#" class="block p-2 rounded hover:bg-green-100">Inventory</a>
-                <a href="#" class="block p-2 rounded hover:bg-green-100">Low Stock</a>
 
+                <div>
+                    <button @click="openInventories = !openInventories"
+                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+                        <span>Inventory</span>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transform transition-transform duration-200"
+                            :class="openInventories ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div x-show="openInventories" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+                        <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                            data-role="admin-only">Current Stocks</a>
+                        <a href="#" onclick="" class="block p-2 rounded hover:bg-green-100 text-sm"
+                            data-role="admin-only">Restock History</a>
+                        <a href="#" onclick="showWasteLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                            data-role="admin-only">Wastage Logs</a>
+                    </div>
+                </div>
 
                 <div>
                     <button @click="openSettings = !openSettings"
@@ -129,26 +179,18 @@
                         </svg>
                     </button>
 
-                    <div x-data="{ openAddCategory: false }">
-                        <div x-show="openSettings" x-cloak class="ml-2 mt-1 border-l-2 border-gray-300 pl-4 space-y-2">
-                            <a href="#" onclick="showManageUsers()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                                data-role="admin-only">
-                                Manage User
-                            </a>
-
-                            <a href="#" onclick="showDishSection()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                                data-role="admin-only">
-                                Manage Dish
-                            </a>
-
-                        </div>
+                    <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+                        <a href="#" onclick="showManageUsers()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                            data-role="admin-only">Manage User</a>
+                        <a href="#" onclick="showDishSection()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                            data-role="admin-only">Manage Dish</a>
                     </div>
                 </div>
-                <a onclick="logout()" class="block p-2 rounded hover:bg-green-100 cursor-pointer">
-                    Logout
-                </a>
+
+                <a onclick="logout()" class="block p-2 rounded hover:bg-green-100 cursor-pointer">Logout</a>
             </nav>
         </aside>
+
 
         <!-- Main Content -->
         <main class="flex-1 p-6">
@@ -180,44 +222,27 @@
 
 
             <!-- Inventory Table -->
-            <div id="inventorySection" class="bg-white p-4 rounded shadow overflow-y-auto">
+            <div id="lowStockSection" class="bg-white p-4 rounded shadow">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">Manage Items</h2>
-                    <div class="flex justify-end gap-2 flex-wrap ml-auto">
-                        <button onclick="showModal()"
-                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm whitespace-nowrap">Add
-                            Items</button>
-                        <button onclick="openAddCategoryModal(event)"
-                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm whitespace-nowrap">Add
-                            Category</button>
-
-                    </div>
+                    <h2 class="text-xl font-semibold">Low Stock Items</h2>
 
                 </div>
                 <div class="mb-4 flex justify-between items-center">
-                    <input id="searchInput" type="text" placeholder="Search items..."
+                    <input id="LSsectionSearch" type="text" placeholder="Search items..."
                         class="border px-3 py-2 rounded w-1/2" />
-                    <select id="categoryFilter" class="border px-2 py-2 rounded">
+                    <select id="lowStockcategoryFilter" class="border px-2 py-2 rounded">
                     </select>
                 </div>
 
                 <!-- Tabs -->
                 <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
-
-                    <button class="tab-button active-tab" onclick="filterInventory('all', this)"
-                        data-filter="all">All</button>
-                    <button class="tab-button " onclick="filterInventory('low', this)" data-filter="low">Low
-                        Stock</button>
-                    <button class="tab-button " onclick="filterInventory('out', this)" data-filter="out">Out of
-                        Stock</button>
-
                 </div>
 
                 <!-- Table -->
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-[600px] table-fixed w-full border-collapse">
-                        <thead class="bg-green-100 text-left">
+                <div class="max-h-[500px] overflow-y-auto overflow-x-auto ">
+                    <table class="min-w-[600px] table-fixed w-full border-collapse shadow">
+                        <thead class="bg-green-100 text-left sticky top-0 z-10">
                             <tr>
                                 <th class="p-2">Item Name</th>
                                 <th class="p-2">Category</th>
@@ -226,7 +251,7 @@
                                 <th class="p-2">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="inventoryBody">
+                        <tbody id="lowStockBody">
                             <!-- Items from Firebase will be inserted here -->
                         </tbody>
                     </table>
@@ -285,10 +310,109 @@
                 </div>
             </div>
 
-            <div id="dishSummarySection" class="hidden p-4">
-                <h2 class="text-xl font-bold mb-4">Dish Summary</h2>
+            <div id="dishSummarySection" class="hidden p-4 bg-white shadow rounded">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Dish Summary</h2>
+                </div>
+                <div class="flex justify-between items-center mb-4 ">
+                    <input id="dishSearchInput" type="text" placeholder="Search items..."
+                        class="border px-3 py-2 rounded w-1/2" />
+                    <select id="dishCategoryFilter" class="border px-2 py-2 rounded">
+                        <option value="Select Category">Select Category</option>
+                        <option value="Main Dish">Main Dish</option>
+                        <option value="Drinks">Drinks</option>
+                        <option value="Snacks">Snacks</option>
+                    </select>
+                </div>
+
+                <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
+                </div>
+
                 <div id="dishList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Dish cards added via JS -->
+                </div>
+            </div>
+
+            <!-- Inventory Table -->
+            <div id="inventorySection" class="bg-white p-4 rounded shadow hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Manage Items</h2>
+                    <div class="flex justify-end gap-2 flex-wrap ml-auto">
+                        <button onclick="showModal()"
+                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm whitespace-nowrap">Add
+                            Items</button>
+                        <button onclick="openAddCategoryModal(event)"
+                            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm whitespace-nowrap">Add
+                            Category</button>
+
+                    </div>
+
+                </div>
+                <div class="mb-4 flex justify-between items-center">
+                    <input id="searchInput" type="text" placeholder="Search items..."
+                        class="border px-3 py-2 rounded w-1/2" />
+                    <select id="categoryFilter" class="border px-2 py-2 rounded">
+                    </select>
+                </div>
+
+                <!-- Tabs -->
+                <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
+
+                    <button class="tab-button active-tab" onclick="filterInventory('all', this)"
+                        data-filter="all">All</button>
+                    <button class="tab-button " onclick="filterInventory('low', this)" data-filter="low">Low
+                        Stock</button>
+                    <button class="tab-button " onclick="filterInventory('out', this)" data-filter="out">Out of
+                        Stock</button>
+
+                </div>
+
+                <!-- Table -->
+
+                <div class="max-h-[500px] overflow-y-auto overflow-x-auto ">
+                    <table class="min-w-[600px] table-fixed w-full border-collapse shadow">
+                        <thead class="bg-green-100 text-left sticky top-0 z-10">
+                            <tr>
+                                <th class="p-2">Item Name</th>
+                                <th class="p-2">Category</th>
+                                <th class="p-2">Quantity</th>
+                                <th class="p-2">Unit</th>
+                                <th class="p-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody">
+                            <!-- Items from Firebase will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- table for waste logs -->
+
+            <div id="wastageLogsSection" class="bg-white p-4 rounded shadow mt-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">Wastage Logs</h2>
+
+                <!-- Tabs -->
+                <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
+                </div>
+
+                <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <table class="min-w-[800px] table-fixed w-full border-collapse">
+                        <thead class="bg-red-100 sticky top-0">
+                            <tr>
+                                <th class="p-2 text-left">Item Name</th>
+                                <th class="p-2 text-left">Quantity</th>
+                                <th class="p-2 text-left">Unit</th>
+                                <th class="p-2 text-left">Reason</th>
+                                <th class="p-2 text-left">In-Charge</th>
+                                <th class="p-2 text-left">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wastageLogsBody">
+                            <!-- Logs will be inserted here -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -320,6 +444,14 @@
                     <option value="L">Liters</option>
                     <option value="Pieces">Pieces</option>
                 </select>
+                <label class="block mb-2 text-sm font-medium text-gray-700">
+                    Low Stock Threshold (optional)
+                </label>
+                <input type="number" step="any" id="lowStockThresholdInput" placeholder="e.g. 1.5"
+                    class="border px-3 py-2 rounded w-full" />
+                <small class="text-gray-500">Enter the quantity at which this item should be marked as low stock. Leave
+                    empty to auto-calculate (30%).</small>
+
                 <div class="flex justify-end gap-2">
                     <button type="button" onclick="hideModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
                     <button type="submit" class="button-save  text-white px-4 py-2 rounded">Save</button>
@@ -659,10 +791,17 @@
         // function for staff table showing
 
         function hideAllSections() {
+            document.getElementById("lowStockSection").classList.add("hidden");
             document.getElementById("inventorySection").classList.add("hidden");
             document.getElementById("dishSection").classList.add("hidden");
             document.getElementById("manageUserSection").classList.add("hidden");
             document.getElementById("dishSummarySection").classList.add("hidden");
+            document.getElementById("wastageLogsSection").classList.add("hidden");
+        }
+
+        function lowStock() {
+            hideAllSections();
+            document.getElementById("lowStockSection").classList.remove("hidden");
         }
 
         function showInventory() {
@@ -870,7 +1009,9 @@
         const inventoryRef = ref(database, "Inventory");
         const tbody = document.getElementById("inventoryBody");
         const categoryDropdown = document.getElementById("categoryFilter");
+        const lowStockcategoryFilter = document.getElementById("lowStockcategoryFilter");
         const searchInput = document.getElementById("searchInput");
+        const LSsearchInput = document.getElementById("LSsectionSearch");
         const tabButtons = document.querySelectorAll(".tab-button");
 
         let currentFilter = "all";
@@ -893,6 +1034,10 @@
             currentCategory = categoryDropdown.value;
             renderTable();
         });
+        lowStockcategoryFilter.addEventListener("change", () => {
+            currentCategory = lowStockcategoryFilter.value;
+            renderLowStockTable();
+        });
 
         // 🔁 Search input listener
         searchInput.addEventListener("input", () => {
@@ -900,11 +1045,14 @@
             renderTable();
         });
 
+        LSsearchInput.addEventListener("input", () => {
+            currentSearch = LSsearchInput.value.toLowerCase(); // ✅ use LSsearchInput here
+            renderLowStockTable();
+        });
+
+
         // save dish in firebase
-
         window.saveDish = function () {
-
-
             const name = document.getElementById("dishName").value;
             const category = document.getElementById("dishCategory").value;
             const ingredients = [];
@@ -1028,16 +1176,50 @@
             loadDishes();
         };
 
-        // 🧠 Save item
+
+        // form.addEventListener('submit', (e) => {
+        //     e.preventDefault();
+
+        //     const itemName = document.getElementById('itemName').value.trim();
+        //     const category = document.getElementById('categoryDropdownInput').value;
+        //     const quantity = parseInt(document.getElementById('quantity').value.trim());
+        //     const unit = document.getElementById('unit').value.trim();
+
+        //     if (!itemName || !category || !quantity || !unit) return alert('All fields are required!');
+
+        //     const newItemRef = push(inventoryRef);
+
+        //     set(newItemRef, {
+        //         itemName,
+        //         category,
+        //         quantity,
+        //         originalQuantity: quantity,
+        //         unit
+        //     }).then(() => {
+        //         alert('✅ Item saved successfully!');
+        //         form.reset();
+        //     }).catch(err => {
+        //         console.error('Error saving data:', err);
+        //         alert('Failed to save item.');
+        //     });
+        // });
+
+        // // 🧠 Save item
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
             const itemName = document.getElementById('itemName').value.trim();
             const category = document.getElementById('categoryDropdownInput').value;
-            const quantity = parseInt(document.getElementById('quantity').value.trim());
+            const quantity = parseFloat(document.getElementById('quantity').value.trim());
             const unit = document.getElementById('unit').value.trim();
+            const thresholdInput = document.getElementById('lowStockThresholdInput').value.trim();
 
-            if (!itemName || !category || !quantity || !unit) return alert('All fields are required!');
+            if (!itemName || !category || !quantity || !unit) {
+                return alert('All fields are required!');
+            }
+
+            // Calculate threshold
+            const lowStockThreshold = thresholdInput ? parseFloat(thresholdInput) : quantity * 0.3;
 
             const newItemRef = push(inventoryRef);
 
@@ -1046,14 +1228,17 @@
                 category,
                 quantity,
                 originalQuantity: quantity,
-                unit
-            }).then(() => {
-                alert('✅ Item saved successfully!');
-                form.reset();
-            }).catch(err => {
-                console.error('Error saving data:', err);
-                alert('Failed to save item.');
-            });
+                unit,
+                lowStockThreshold
+            })
+                .then(() => {
+                    alert('✅ Item saved successfully!');
+                    form.reset();
+                })
+                .catch(err => {
+                    console.error('Error saving data:', err);
+                    alert('Failed to save item.');
+                });
         });
 
 
@@ -1095,7 +1280,6 @@
                 alert("❌ Failed to add staff.");
             });
         });
-
 
         // show staff into the table
         function loadUsers() {
@@ -1149,6 +1333,7 @@
                 items.push(childSnapshot.val());
             });
             renderTable(); // Initial render
+            renderLowStockTable();
         });
 
         // 📋 Render with all filters applied
@@ -1157,7 +1342,10 @@
 
             Object.entries(items).forEach(([key, item]) => {
                 const original = item.originalQuantity || item.quantity;
-                const isLowStock = item.quantity > 0 && item.quantity <= original * 0.3;
+                // const isLowStock = item.quantity > 0 && item.quantity <= original * 0.3;
+                const threshold = item.lowStockThreshold || (item.originalQuantity * 0.3);
+                const isLowStock = item.quantity > 0 && item.quantity <= threshold;
+
                 const isOutOfStock = item.quantity === 0;
 
                 // 🔎 Filtering logic
@@ -1170,7 +1358,6 @@
                 const matchesCategory =
                     currentCategory === "All" || item.category === currentCategory;
 
-                // const matchesSearch = item.itemName.toLowerCase().includes(currentSearch);
                 const matchesSearch = (item.itemName || "").toLowerCase().includes(currentSearch);
 
 
@@ -1204,6 +1391,66 @@
                         </button>
                     </td>
                     `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderLowStockTable() {
+            const tbody = document.getElementById("lowStockBody");
+            tbody.innerHTML = "";
+
+            Object.entries(items).forEach(([key, item]) => {
+                const original = item.originalQuantity || item.quantity;
+                // const isLowStock = item.quantity > 0 && item.quantity <= original * 0.3;
+                const threshold = item.lowStockThreshold || (item.originalQuantity * 0.3);
+                const isLowStock = item.quantity > 0 && item.quantity <= threshold;
+
+                const isOutOfStock = item.quantity === 0;
+
+                // ⚠️ Only show if low or out of stock
+                if (!isLowStock && !isOutOfStock) return;
+
+                // 🔎 Filtering logic
+                const matchesTab = (
+                    currentFilter === "all" ||
+                    (currentFilter === "low" && isLowStock) ||
+                    (currentFilter === "out" && isOutOfStock)
+                );
+
+                const matchesCategory =
+                    currentCategory === "All" || item.category === currentCategory;
+
+                // const matchesSearch = item.itemName.toLowerCase().includes(currentSearch);
+                const matchesSearchs = (item.itemName || "").toLowerCase().includes(currentSearch);
+
+
+                if (!(matchesTab && matchesCategory && matchesSearchs)) return;
+
+                // Badge
+                let stockLabel = "";
+                if (isOutOfStock) {
+                    stockLabel = `<span class="text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded-full">Out of Stock</span>`;
+                } else if (isLowStock) {
+                    stockLabel = `<span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">Low Stock</span>`;
+                }
+
+                // Create table row
+                const tr = document.createElement("tr");
+                tr.classList.add("border-b");
+
+                tr.innerHTML = `
+            <td class="p-2">${item.itemName}</td>
+            <td class="p-2">${item.category}</td>
+            <td class="p-2">${item.quantity} ${stockLabel}</td>
+            <td class="p-2">${item.unit}</td>
+            <td class="p-2">
+                <button class="text-black mr-2 rounded hover:underline"
+                    onclick="openRestockModal('${key}', '${item.itemName}', ${item.quantity}, '${item.unit}')">
+                    Restock
+                </button>
+            </td>
+        `;
+
                 tbody.appendChild(tr);
             });
         }
@@ -1317,10 +1564,12 @@
                 // Get both dropdown elements
                 const modalDropdown = document.getElementById("categoryDropdownInput");
                 const filterDropdown = document.getElementById("categoryFilter");
+                const LsfilterDropdown = document.getElementById("lowStockcategoryFilter");
 
                 // Clear previous options
                 modalDropdown.innerHTML = '<option value="">Select a category</option>';
                 filterDropdown.innerHTML = '<option value="All">All Categories</option>';
+                LsfilterDropdown.innerHTML = '<option value="All">All Categories</option>';
 
                 if (data) {
                     Object.entries(data).forEach(([key, value]) => {
@@ -1333,6 +1582,11 @@
                         option2.value = value.name;
                         option2.textContent = value.name;
                         filterDropdown.appendChild(option2);
+
+                        const option3 = document.createElement("option");
+                        option3.value = value.name;
+                        option3.textContent = value.name;
+                        LsfilterDropdown.appendChild(option3);
                     });
                 }
             });
@@ -1512,59 +1766,6 @@
 
 
         // restock code saving to firebase
-
-        // async function confirmRestock() {
-        //     const amount = parseFloat(document.getElementById("restockAmountInput").value);
-
-        //     if (isNaN(amount) || amount <= 0) {
-        //         alert("Please enter a valid restock amount.");
-        //         return;
-        //     }
-
-        //     const db = getDatabase();
-        //     const itemRef = ref(db, `Inventory/${restockItemKey}`);
-
-        //     try {
-        //         // 1. Read existing inventory item first
-        //         const snapshot = await get(itemRef);
-        //         console.log("Restock item key:", restockItemKey);
-        //         console.log("Item ref path:", `Inventory/${restockItemKey}`);
-
-        //         if (!snapshot.exists()) {
-        //             alert("❌ Item not found in inventory.");
-        //             return;
-        //         }
-
-        //         const itemData = snapshot.val();
-        //         const updatedQuantity = itemData.quantity + amount;
-        //         const updatedOriginalQty = (itemData.originalQuantity || itemData.quantity) + amount;
-
-        //         // 2. Update Inventory
-        //         await update(itemRef, {
-        //             quantity: updatedQuantity,
-        //             originalQuantity: updatedOriginalQty
-        //         });
-
-        //         // 3. Save to RestockHistory
-        //         const staffName = localStorage.getItem("userFullName") || "Unknown Staff";
-        //         const restockData = {
-        //             itemName: restockItemName,
-        //             amountAdded: amount,
-        //             unit: restockUnit,
-        //             restockedBy: staffName,
-        //             timestamp: new Date().toISOString()
-        //         };
-
-        //         await push(ref(db, "RestockHistory"), restockData);
-
-        //         alert(`✅ ${amount} ${restockUnit} of ${restockItemName} restocked successfully.`);
-        //         closeRestockModal();
-
-        //     } catch (error) {
-        //         console.error("Restock failed:", error);
-        //         alert("❌ Failed to restock item.");
-        //     }
-        // }
         async function confirmRestock() {
             const amount = parseFloat(document.getElementById("restockAmountInput").value);
             const inputUnit = document.getElementById("restockUnitInput").value;
@@ -1663,6 +1864,9 @@
             const updates = {};
             updates[`Inventory/${itemKey}/quantity`] = newQtyInOriginalUnit;
 
+            // Get in-charge name from localStorage
+            const inCharge = localStorage.getItem("userFullName") || "Unknown";
+
             // Save to wastage logs
             const wastageRef = push(ref(db, "WastageLogs"));
             const logData = {
@@ -1670,6 +1874,7 @@
                 deductedQuantity: quantity,
                 unit,
                 reason,
+                inCharge,
                 date: new Date().toISOString()
             };
 
@@ -1681,8 +1886,55 @@
             console.log("✅ Wastage deducted and logged successfully.");
         }
 
+
+        // code for wastelogs
+
+        function loadWastageLogs() {
+            const db = getDatabase();
+            const logsRef = ref(db, "WastageLogs");
+
+            const tbody = document.getElementById("wastageLogsBody");
+            tbody.innerHTML = "";
+
+            onValue(logsRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    tbody.innerHTML = "<tr><td colspan='6' class='p-4 text-center text-gray-500'>No wastage logs found.</td></tr>";
+                    return;
+                }
+
+                snapshot.forEach(logSnap => {
+                    const log = logSnap.val();
+
+                    const tr = document.createElement("tr");
+                    tr.classList.add("border-b");
+
+                    tr.innerHTML = `
+                <td class="p-2">${log.itemName || "-"}</td>
+                <td class="p-2">${log.deductedQuantity || "-"}</td>
+                <td class="p-2">${log.unit || "-"}</td>
+                <td class="p-2">${log.reason || "-"}</td>
+                <td class="p-2">${log.inCharge || "Unknown"}</td>
+                <td class="p-2">${new Date(log.date).toLocaleString()}</td>
+            `;
+
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function showWasteLogs() {
+            hideAllSections();
+            document.getElementById("wastageLogsSection").classList.remove("hidden");
+            loadWastageLogs();
+        }
+
+
+
+
         loadCategories();
         renderTable();
+
+        renderLowStockTable();
 
         window.showManageUsers = showManageUsers;
         window.loadUsers = loadUsers;
@@ -1694,6 +1946,10 @@
         window.confirmRestock = confirmRestock;
 
         window.deductWastage = deductWastage;
+
+
+        window.showWasteLogs = showWasteLogs;
+        window.loadWastageLogs = loadWastageLogs;
 
     </script>
 

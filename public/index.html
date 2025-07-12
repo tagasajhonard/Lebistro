@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 
+<!-- Project Console: https://console.firebase.google.com/project/lebistro-9be16/overview
+Hosting URL: https://lebistro-9be16.web.appn public
+ -->
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -40,6 +44,8 @@
 
 </body>
 <script type="module">
+  console.log("🔥 Firebase Login Script Loaded");
+
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -49,17 +55,28 @@
   const firebaseConfig = {
     apiKey: "AIzaSyAirT0VzOc7Bzcsj3oV5_9PQS8f990uzwo",
     authDomain: "lebistro-9be16.firebaseapp.com",
+    databaseURL: "https://lebistro-9be16-default-rtdb.firebaseio.com", // ✅ Fixed
     projectId: "lebistro-9be16",
-    storageBucket: "lebistro-9be16.firebasestorage.app",
+    storageBucket: "lebistro-9be16.appspot.com", // ✅ Also corrected
     messagingSenderId: "115040507366",
     appId: "1:115040507366:web:3281b19470f482cff0f227"
   };
+
+
+
+
+
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth();
   const database = getDatabase(app);
   const loginForm = document.getElementById('loginForm');
+
+  if (!app || !database) {
+    alert("Firebase failed to initialize.");
+  }
+
 
   loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
