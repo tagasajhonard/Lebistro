@@ -12,6 +12,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <script>
+    window.addEventListener('load', () => {
+        const loadingModal = document.getElementById('loadingModal');
+        if (loadingModal) {
+            loadingModal.classList.add('opacity-0'); // smooth fade
+            setTimeout(() => {
+                loadingModal.classList.add('hidden');
+            }, 500); // wait for transition
+        }
+    });
+</script>
+
+<script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
         alert("You must log in first.");
         window.location.href = "index.html";
@@ -20,73 +32,64 @@
 <script>
     console.log("Stored role:", localStorage.getItem("userRole"));
 </script>
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        setTimeout(() => {
-            const role = localStorage.getItem("userRole");
-
-            if (role !== "Admin") {
-                // Hide all admin-only elements
-                const adminOnlyElements = document.querySelectorAll('[data-role="admin-only"]');
-                adminOnlyElements.forEach(el => el.classList.add("hidden"));
-
-                // Optionally: remove the Manage Users section
-                const manageUserSection = document.getElementById("manageUserSection");
-                if (manageUserSection) {
-                    manageUserSection.remove();
-                }
-            }
-        }); // Wait a bit to ensure Alpine has rendered
-    });
-</script>
 
 <body class=" text-gray-800">
+    <!-- Fullscreen Loading Modal -->
+    <div id="loadingModal"
+        class="fixed inset-0 bg-white flex items-center justify-center z-50 transition-opacity duration-500">
+        <div class="flex flex-col items-center space-y-4">
+            <!-- Spinner -->
+            <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+
+            <!-- Message -->
+            <p class="text-gray-700 text-base font-medium">Loading, please wait...</p>
+        </div>
+    </div>
 
     <!-- Sidebar -->
     <div class="flex flex-col lg:flex-row min-h-screen">
         <aside class="bg-white shadow-lg p-5 space-y-6 w-full lg:w-64 hidden lg:block">
             <h1 class="text-2xl font-bold nav">Navigation</h1>
             <nav class="space-y-3" x-data="{ openInventory: false, openSettings: false }">
-                <a href="#" onclick="lowStock()" class="block p-2 rounded hover:bg-green-100">Dashboard</a>
-                <a href="#" onclick="ViewDishes()" class="block p-2 rounded hover:bg-green-100">View Dishes</a>
-                <div>
-                    <button @click="openInventory = !openInventory"
-                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
-                        <span>Inventory</span>
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4 transform transition-transform duration-200"
-                            :class="openInventory ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
 
-                    <div>
-                        <div x-show="openInventory" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
-                            <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                                data-role="admin-only">
-                                Current Stocks
-                            </a>
 
-                            <a href="#" onclick="showRestockLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                                data-role="admin-only">
-                                Restock History
-                            </a>
+                <a href="#" onclick="lowStock()" class="block p-2 rounded hover:bg-green-100 flex gap-2"><svg
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    </svg>Dashboard</a>
 
-                            <a href="#" onclick="showWasteLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                                data-role="admin-only">
-                                Wastage Logs
-                            </a>
+                <a href="#" onclick="ViewDishes()" class="block p-2 rounded hover:bg-green-100 flex gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
 
-                        </div>
-                    </div>
-                </div>
+                    View Dishes</a>
+
 
                 <!-- Settings with submenu -->
                 <div>
                     <button @click="openSettings = !openSettings"
                         class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
-                        <span>Management</span>
+
+                        <span class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4.867 19.125h.008v.008h-.008v-.008Z" />
+                            </svg>
+                            Admin Tools
+                        </span>
                         <svg xmlns="http://www.w3.org/2000/svg"
                             class="h-4 w-4 transform transition-transform duration-200"
                             :class="openSettings ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
@@ -97,22 +100,108 @@
 
                     <div x-data="{ openAddCategory: false }">
                         <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
-                            <a href="#" onclick="showManageUsers()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                                data-role="admin-only">
-                                Manage User
+                            <a href="#" onclick="showInventory()"
+                                class="block p-2 rounded hover:bg-green-100 text-sm flex gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                                </svg>
+
+                                Manage Stocks
                             </a>
 
-                            <a href="#" onclick="showDishSection()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                                data-role="admin-only">
-                                Manage Dish
+                            <a href="#" onclick="showDishSection()"
+                                class="block p-2 rounded hover:bg-green-100 text-sm flex gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                                </svg>
+                                Manage Dishes
+                            </a>
+
+                            <a href="#" onclick="showManageUsers()"
+                                class="block p-2 rounded hover:bg-green-100 text-sm flex gap-2" data-role="admin-only">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                                </svg>
+                                Manage Users
+                            </a>
+
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button @click="openInventory = !openInventory"
+                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+
+                        <span class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                            </svg>Reports
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transform transition-transform duration-200"
+                            :class="openInventory ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div>
+                        <div x-show="openInventory" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+                            <a href="#" onclick="showRestockLogs()"
+                                class="block p-2 rounded hover:bg-green-100 text-sm flex gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0-3-3m3 3 3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                                </svg>
+                                Restock Logs
+                            </a>
+
+                            <a href="#" onclick="showWasteLogs()"
+                                class="block p-2 rounded hover:bg-green-100 text-sm flex gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                </svg>
+
+                                Waste Logs
+                            </a>
+
+                            <a href="#" onclick="showOrderLogs()"
+                                class="block p-2 rounded hover:bg-green-100 text-sm flex gap-2" data-role="admin-only">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75" />
+                                </svg>
+                                Order Logs
                             </a>
 
                         </div>
                     </div>
                 </div>
+
                 <!-- Logout Button -->
 
-                <a onclick="logout()" class="block p-2 rounded hover:bg-green-100 cursor-pointer">
+                <a onclick="logout()" class="block p-2 rounded hover:bg-green-100 cursor-pointer flex gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                    </svg>
+
                     Logout
                 </a>
             </nav>
@@ -146,31 +235,9 @@
                 <a href="#" onclick="ViewDishes()" class="block p-2 rounded hover:bg-green-100">View Dishes</a>
 
                 <div>
-                    <button @click="openInventories = !openInventories"
-                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
-                        <span>Inventory</span>
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4 transform transition-transform duration-200"
-                            :class="openInventories ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-
-                    <div x-show="openInventories" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
-                        <a href="#" onclick="showInventory()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                            data-role="admin-only">Current Stocks</a>
-                        <a href="#" onclick="showRestockLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                            data-role="admin-only">Restock History</a>
-                        <a href="#" onclick="showWasteLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                            data-role="admin-only">Wastage Logs</a>
-                    </div>
-                </div>
-
-                <div>
                     <button @click="openSettings = !openSettings"
                         class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
-                        <span>Management</span>
+                        <span>Admin Tools</span>
                         <svg xmlns="http://www.w3.org/2000/svg"
                             class="h-4 w-4 transform transition-transform duration-200"
                             :class="openSettings ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
@@ -180,10 +247,36 @@
                     </button>
 
                     <div x-show="openSettings" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+                        <a href="#" onclick="showInventory()"
+                            class="block p-2 rounded hover:bg-green-100 text-sm">Manage Stocks</a>
+                        <a href="#" onclick="showDishSection()"
+                            class="block p-2 rounded hover:bg-green-100 text-sm">Manage Dishes</a>
                         <a href="#" onclick="showManageUsers()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                            data-role="admin-only">Manage User</a>
-                        <a href="#" onclick="showDishSection()" class="block p-2 rounded hover:bg-green-100 text-sm"
-                            data-role="admin-only">Manage Dish</a>
+                            data-role="admin-only">Manage Users</a>
+                    </div>
+                </div>
+
+                <div>
+                    <button @click="openInventories = !openInventories"
+                        class="w-full flex items-center justify-between p-2 rounded hover:bg-green-100">
+                        <span>Reports</span>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transform transition-transform duration-200"
+                            :class="openInventories ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div x-show="openInventories" x-cloak class="ml-4 mt-2 border-l-2 border-gray-300 pl-4 space-y-2">
+                        <a href="#" onclick="showRestockLogs()"
+                            class="block p-2 rounded hover:bg-green-100 text-sm">Restock Logs</a>
+                        <a href="#" onclick="showWasteLogs()" class="block p-2 rounded hover:bg-green-100 text-sm">Waste
+                            Logs</a>
+                        <a href="#" onclick="showOrderLogs()" class="block p-2 rounded hover:bg-green-100 text-sm"
+                            data-role="admin-only">
+                            Order Logs
+                        </a>
                     </div>
                 </div>
 
@@ -292,7 +385,7 @@
                     <button onclick="openAddDishModal()"
                         class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Add Dish</button>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="max-h-[600px] overflow-y-auto overflow-x-auto ">
                     <table class="min-w-[500px] table-fixed w-full border-collapse">
                         <thead class="bg-gray-100 text-left">
                             <tr>
@@ -417,7 +510,7 @@
 
             <!-- table for restocks -->
             <div id="restockLogsSection" class="bg-white p-4 rounded shadow mt-6 hidden">
-                <h2 class="text-xl font-semibold mb-4">Restock History</h2>
+                <h2 class="text-xl font-semibold mb-4">Restock Logs</h2>
 
                 <!-- Tabs -->
                 <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
@@ -435,6 +528,31 @@
                             </tr>
                         </thead>
                         <tbody id="restockLogsBody">
+                            <!-- Logs will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- table for order logs -->
+            <div id="orderLogsSection" class="bg-white p-4 rounded shadow mt-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">Order Logs</h2>
+
+                <!-- Tabs -->
+                <div class="mb-4 flex flex-wrap sm:flex-nowrap gap-2 border-b overflow-x-auto">
+                </div>
+
+                <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <table class=" table-fixed w-full border-collapse">
+                        <thead class="bg-red-100 sticky top-0">
+                            <tr>
+                                <th class="p-2 text-left">Dish Name</th>
+                                <th class="p-2 text-left">Quantity</th>
+                                <th class="p-2 text-left">Process By</th>
+                                <th class="p-2 text-left">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersLogsBody">
                             <!-- Logs will be inserted here -->
                         </tbody>
                     </table>
@@ -612,7 +730,6 @@
         </div>
     </div>
 
-
     <!-- Restock Modal -->
     <div id="restockModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
@@ -643,7 +760,6 @@
             </div>
         </div>
     </div>
-
 
     <!-- Wastage Modal -->
     <div id="wastageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
@@ -690,6 +806,33 @@
         </div>
     </div>
 
+    <!-- edit dish modal -->
+    <div id="editDishModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white p-6 rounded w-full max-w-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">Edit Dish</h2>
+            <input type="hidden" id="editDishId" />
+            <div class="mb-2">
+                <label class="block text-sm font-medium text-gray-700">Dish Name</label>
+                <input id="editDishName" type="text" class="border px-3 py-2 rounded w-full" />
+            </div>
+            <div class="mb-2">
+                <label class="block text-sm font-medium text-gray-700">Category</label>
+                <input id="editDishCategory" type="text" class="border px-3 py-2 rounded w-full" />
+            </div>
+            <div class="mb-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Ingredients</label>
+                <div id="editIngredientsContainer" class="space-y-2">
+                    <!-- Ingredient input rows will be injected here -->
+                </div>
+            </div>
+
+            <!-- Optional: Display ingredients if editing them is needed -->
+            <div class="flex justify-end mt-4 space-x-2">
+                <button onclick="closeEditDishModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                <button onclick="saveEditedDish()" class="px-4 py-2 bg-green-600 text-white rounded">Save</button>
+            </div>
+        </div>
+    </div>
 
 
 
@@ -822,6 +965,7 @@
             document.getElementById("dishSummarySection").classList.add("hidden");
             document.getElementById("wastageLogsSection").classList.add("hidden");
             document.getElementById("restockLogsSection").classList.add("hidden");
+            document.getElementById("orderLogsSection").classList.add("hidden");
         }
 
         function lowStock() {
@@ -974,6 +1118,9 @@
             return result;
         }
 
+        function closeEditDishModal() {
+            document.getElementById("editDishModal").classList.add("hidden");
+        }
 
 
 
@@ -1122,6 +1269,8 @@
 
         function loadDishes() {
             const dishRef = ref(database, 'Dish');
+            const searchQuery = document.getElementById("dishSearchInput").value.toLowerCase();
+            const selectedCategory = document.getElementById("categoryFilter").value;
 
             onValue(dishRef, (snapshot) => {
                 const dishTableBody = document.getElementById("dishTableBody");
@@ -1132,6 +1281,7 @@
 
                     Object.keys(dishes).forEach(dishId => {
                         const dish = dishes[dishId];
+
 
                         // Top dish row
                         const row = document.createElement('tr');
@@ -1626,42 +1776,105 @@
 
         // show dishes cards
 
+        // function loadDishCards() {
+        //     const db = getDatabase(app);
+        //     const dishRef = ref(db, "Dish");
+
+        //     onValue(dishRef, snapshot => {
+
+        //         const dishList = document.getElementById("dishList");
+        //         dishList.innerHTML = ""; // Clear previous cards
+
+        //         if (snapshot.exists()) {
+        //             snapshot.forEach(dishSnap => {
+        //                 const dish = dishSnap.val();
+        //                 const dishName = dish.dishName;
+
+        //                 const card = document.createElement("div");
+        //                 card.className = "p-4 bg-white rounded shadow hover:bg-green-100 cursor-pointer transition";
+
+
+        //                 card.innerHTML = `
+        //                     <div class="flex items-center justify-between">
+        //                         <h3 class="text-lg font-semibold text-gray-800">${dishName}</h3>
+        //                     </div>
+        //                     <p class="text-sm text-gray-500">${dish.category || "Uncategorized"}</p>
+        //                     <p class="text-xs text-green-600 mt-2 italic">Click to record order</p>
+        //                 `;
+
+        //                 card.onclick = () => openDishModal(dishSnap.key, dishName);
+
+        //                 dishList.appendChild(card);
+        //             });
+        //         } else {
+        //             dishList.innerHTML = "<p class='text-gray-500'>No dishes found.</p>";
+        //         }
+        //     }, {
+        //         onlyOnce: false // This makes sure it keeps listening for changes
+        //     });
+        // }
+        let allDishes = [];
+
         function loadDishCards() {
             const db = getDatabase(app);
             const dishRef = ref(db, "Dish");
 
             onValue(dishRef, snapshot => {
-                const dishList = document.getElementById("dishList");
-                dishList.innerHTML = ""; // Clear previous cards
+                allDishes = [];
 
                 if (snapshot.exists()) {
                     snapshot.forEach(dishSnap => {
                         const dish = dishSnap.val();
-                        const dishName = dish.dishName;
-
-                        const card = document.createElement("div");
-                        card.className = "p-4 bg-white rounded shadow hover:bg-green-100 cursor-pointer transition";
-
-
-                        card.innerHTML = `
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-semibold text-gray-800">${dishName}</h3>
-                            </div>
-                            <p class="text-sm text-gray-500">${dish.category || "Uncategorized"}</p>
-                            <p class="text-xs text-green-600 mt-2 italic">Click to record order</p>
-                        `;
-
-                        card.onclick = () => openDishModal(dishSnap.key, dishName);
-
-                        dishList.appendChild(card);
+                        dish.key = dishSnap.key; // store key for later
+                        allDishes.push(dish);
                     });
+
+                    renderDishCards(allDishes);
                 } else {
-                    dishList.innerHTML = "<p class='text-gray-500'>No dishes found.</p>";
+                    document.getElementById("dishList").innerHTML = "<p class='text-gray-500'>No dishes found.</p>";
                 }
             }, {
-                onlyOnce: false // This makes sure it keeps listening for changes
+                onlyOnce: false
             });
         }
+        function renderDishCards(dishes) {
+            const dishList = document.getElementById("dishList");
+            dishList.innerHTML = "";
+
+            if (dishes.length === 0) {
+                dishList.innerHTML = "<p class='text-gray-500'>No matching dishes.</p>";
+                return;
+            }
+
+            dishes.forEach(dish => {
+                const card = document.createElement("div");
+                card.className = "p-4 bg-white rounded shadow hover:bg-green-100 cursor-pointer transition";
+                card.innerHTML = `
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-800">${dish.dishName}</h3>
+            </div>
+            <p class="text-sm text-gray-500">${dish.category || "Uncategorized"}</p>
+            <p class="text-xs text-green-600 mt-2 italic">Click to record order</p>
+        `;
+                card.onclick = () => openDishModal(dish.key, dish.dishName);
+                dishList.appendChild(card);
+            });
+        }
+
+        function applyDishFilters() {
+            const searchInput = document.getElementById("dishSearchInput").value.toLowerCase();
+            const selectedCategory = document.getElementById("dishCategoryFilter").value;
+
+            const filtered = allDishes.filter(dish => {
+                const nameMatch = dish.dishName.toLowerCase().includes(searchInput);
+                const categoryMatch = selectedCategory === "Select Category" || dish.category === selectedCategory;
+                return nameMatch && categoryMatch;
+            });
+
+            renderDishCards(filtered);
+        }
+        document.getElementById("dishSearchInput").addEventListener("input", applyDishFilters);
+        document.getElementById("dishCategoryFilter").addEventListener("change", applyDishFilters);
 
 
         async function confirmDishOrder() {
@@ -1728,9 +1941,9 @@
             const inventorySnapshot = await get(ref(db, "Inventory"));
             const inventoryData = inventorySnapshot.val();
 
+            const notFound = [];
             const insufficient = [];
 
-            // 1. First pass: check for all insufficient items
             for (const ingredient of ingredients) {
                 const { name, quantity: usedQuantity, unit: dishUnit } = ingredient;
                 const usedQtyInGrams = convertToGrams(usedQuantity, dishUnit) * quantity;
@@ -1741,6 +1954,7 @@
 
                 if (!matchedKey) {
                     console.warn(`Ingredient "${name}" not found in inventory.`);
+                    notFound.push(name);
                     continue;
                 }
 
@@ -1752,15 +1966,24 @@
                 if (invQtyInGrams < usedQtyInGrams) {
                     insufficient.push(name);
                 }
-
             }
 
-            // 2. Stop everything if any are insufficient
-            if (insufficient.length > 0) {
-                const message = `⚠️ Low stock alert cannot complete order. Not enough stock for:\n- ${insufficient.join("\n- ")}`;
+
+            if (notFound.length > 0 || insufficient.length > 0) {
+                let message = "⚠️ Order cannot be completed due to:\n";
+
+                if (insufficient.length > 0) {
+                    message += `\n Not enough stock for:\n- ${insufficient.join("\n- ")}`;
+                }
+
+                if (notFound.length > 0) {
+                    message += `\n\n Missing ingredients (not found in inventory):\n- ${notFound.join("\n- ")}`;
+                }
+
                 showErrorModal(message);
-                throw new Error("Insufficient stock for: " + insufficient.join(", "));
+                throw new Error(message);
             }
+
 
             // 3. Second pass: now calculate updates because all ingredients are sufficient
             const updates = {};
@@ -1991,8 +2214,114 @@
             document.getElementById("restockLogsSection").classList.remove("hidden");
             loadRestockLogs();
         }
+        function editDish(dishId) {
+            const dishRef = ref(database, `Dish/${dishId}`);
+            get(dishRef).then(snapshot => {
+                if (snapshot.exists()) {
+                    const dish = snapshot.val();
+                    document.getElementById("editDishId").value = dishId;
+                    document.getElementById("editDishName").value = dish.dishName;
+                    document.getElementById("editDishCategory").value = dish.category;
 
+                    const ingredientsContainer = document.getElementById("editIngredientsContainer");
+                    ingredientsContainer.innerHTML = ''; // Clear old content
 
+                    dish.ingredients.forEach((ingredient, index) => {
+                        const row = document.createElement("div");
+                        row.className = "flex gap-2";
+                        row.innerHTML = `
+          <input type="text" class="border px-2 py-1 w-1/2" placeholder="Name" value="${ingredient.name}" data-type="name" data-index="${index}" />
+          <input type="number" class="border px-2 py-1 w-1/4" placeholder="Qty" value="${ingredient.quantity}" data-type="quantity" data-index="${index}" />
+          <input type="text" class="border px-2 py-1 w-1/4" placeholder="Unit" value="${ingredient.unit}" data-type="unit" data-index="${index}" />
+        `;
+                        ingredientsContainer.appendChild(row);
+                    });
+
+                    document.getElementById("editDishModal").classList.remove("hidden");
+                } else {
+                    alert("Dish not found.");
+                }
+            }).catch(error => {
+                console.error("Error loading dish:", error);
+            });
+        }
+
+        function saveEditedDish() {
+            const dishId = document.getElementById("editDishId").value;
+            const newName = document.getElementById("editDishName").value.trim();
+            const newCategory = document.getElementById("editDishCategory").value.trim();
+
+            if (!newName || !newCategory) {
+                alert("Dish name and category are required.");
+                return;
+            }
+
+            const ingredientInputs = document.querySelectorAll('#editIngredientsContainer input');
+            const ingredientsMap = {}; // to group by index
+            ingredientInputs.forEach(input => {
+                const index = input.dataset.index;
+                const type = input.dataset.type;
+                if (!ingredientsMap[index]) ingredientsMap[index] = {};
+                ingredientsMap[index][type] = input.value;
+            });
+
+            const updatedIngredients = Object.values(ingredientsMap).map(ing => ({
+                name: ing.name,
+                quantity: parseFloat(ing.quantity),
+                unit: ing.unit
+            }));
+
+            const dishRef = ref(database, `Dish/${dishId}`);
+            update(dishRef, {
+                dishName: newName,
+                category: newCategory,
+                ingredients: updatedIngredients
+            }).then(() => {
+                alert("✅ Dish updated successfully!");
+                document.getElementById("editDishModal").classList.add("hidden");
+                loadDishes(); // Refresh table
+            }).catch(error => {
+                console.error("Error updating dish:", error);
+                alert("❌ Failed to update dish.");
+            });
+        }
+
+        function loadOrdersLogs() {
+            const db = getDatabase();
+            const logsRef = ref(db, "Orders");
+
+            const tbody = document.getElementById("ordersLogsBody");
+            tbody.innerHTML = "";
+
+            onValue(logsRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    tbody.innerHTML = "<tr><td colspan='6' class='p-4 text-center text-gray-500'>No Orders logs found.</td></tr>";
+                    return;
+                }
+
+                snapshot.forEach(logSnap => {
+                    const log = logSnap.val();
+
+                    const tr = document.createElement("tr");
+                    tr.classList.add("border-b");
+
+                    tr.innerHTML = `
+                <td class="p-2">${log.dishName || "-"}</td>
+                <td class="p-2">${log.quantity || "-"}</td>
+                <td class="p-2">${log.processBy || "Unknown"}</td>
+                <td class="p-2">${new Date(log.timestamp).toLocaleString()}</td>
+            `;
+
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function showOrderLogs() {
+            hideAllSections();
+            document.getElementById("orderLogsSection").classList.remove("hidden");
+            loadOrdersLogs();
+        }
 
 
         loadCategories();
@@ -2011,13 +2340,32 @@
 
         window.deductWastage = deductWastage;
 
-
         window.showWasteLogs = showWasteLogs;
         window.loadWastageLogs = loadWastageLogs;
 
         window.showRestockLogs = showRestockLogs;
+        window.saveEditedDish = saveEditedDish;
+        window.editDish = editDish;
+
+        window.showOrderLogs = showOrderLogs;
+        window.loadOrdersLogs = loadOrdersLogs;
+
 
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const role = localStorage.getItem("userRole");
+            console.log("Stored role:", role);
+
+            if (role === "Staff") {
+                // Hide all elements with data-role="admin-only"
+                document.querySelectorAll('[data-role="admin-only"]').forEach(el => {
+                    el.classList.add("hidden");
+                });
+            }
+        });
+    </script>
+
 
 
 
