@@ -12,6 +12,7 @@ Hosting URL: https://lebistro-9be16.web.appn public
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" type="image/x-icon" href="img/logo.jpg">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 <script>
   if (localStorage.getItem('isLoggedIn') === 'true') {
@@ -21,6 +22,57 @@ Hosting URL: https://lebistro-9be16.web.appn public
 </script>
 
 <body class="bg-gray-100 flex items-center justify-center min-h-screen px-6">
+
+  <!-- Modal -->
+
+  <div id="loginRequestModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-2">
+    <div class="bg-white p-6 rounded-xl shadow-lg w-[90%] max-w-md text-center space-y-4 border border-gray-200">
+
+      <!-- Title -->
+      <h2 class="text-xl font-bold text-gray-800">Login Outside Working Hours</h2>
+
+      <!-- Description -->
+      <p class="text-sm text-gray-600">
+        You are attempting to log in outside allowed working hours.<br>
+        Would you like to request access from the admin?
+      </p>
+
+      <!-- Buttons -->
+      <div class="flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-4">
+        <button onclick="submitLoginRequest()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-200 w-full sm:w-auto">
+          Request Login Access
+        </button>
+
+        <button onclick="closeLoginModal()"
+          class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded transition duration-200 w-full sm:w-auto">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Loading Modal -->
+  <div id="loadingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-2">
+    <div class="bg-white p-6 rounded shadow-md text-center space-y-4">
+      <!-- Spinner -->
+      <svg class="animate-spin h-10 w-10 text-green-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+
+      <!-- Message -->
+      <p id="loadingModalMessage" class="text-gray-700 text-sm">
+        Please wait while admin confirms your login request...
+      </p>
+    </div>
+  </div>
+
+
+
+
 
   <div class="bg-white shadow-md rounded-xl p-8 w-full max-w-sm px-4">
     <h2 class="text-2xl font-semibold mb-6 text-center">Login</h2>
@@ -43,6 +95,41 @@ Hosting URL: https://lebistro-9be16.web.appn public
   </div>
 
 </body>
+<script>
+  function showLoginRequestModal(staff) {
+    // Store staff info temporarily
+    window.requestingStaff = staff;
+    document.getElementById('loginRequestModal').classList.remove('hidden');
+  }
+
+  function closeLoginModal() {
+    document.getElementById('loginRequestModal').classList.add('hidden');
+  }
+  function showLoadingModal(message) {
+    document.getElementById('loadingModalMessage').textContent = message;
+    document.getElementById('loadingModal').classList.remove('hidden');
+  }
+
+  function updateLoadingModal(message) {
+    document.getElementById('loadingModalMessage').textContent = message;
+  }
+
+  function hideLoadingModal() {
+    document.getElementById('loadingModal').classList.add('hidden');
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const status = localStorage.getItem('loginRequestStatus');
+    const requestKey = localStorage.getItem('loginRequestKey');
+
+    if (status === 'pending' && requestKey) {
+      showLoadingModal("Please wait while admin confirms your login request...");
+      listenToLoginRequestStatus(requestKey);
+    }
+  });
+
+
+</script>
 <script type="module">
   console.log("🔥 Firebase Login Script Loaded");
 
@@ -62,11 +149,6 @@ Hosting URL: https://lebistro-9be16.web.appn public
     appId: "1:115040507366:web:3281b19470f482cff0f227"
   };
 
-
-
-
-
-
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth();
@@ -83,7 +165,6 @@ Hosting URL: https://lebistro-9be16.web.appn public
 
     const inputEmail = document.getElementById('email').value.trim();
     const inputPassword = document.getElementById('password').value.trim();
-
     const staffRef = ref(database, 'Staff');
 
     onValue(staffRef, (snapshot) => {
@@ -94,13 +175,37 @@ Hosting URL: https://lebistro-9be16.web.appn public
 
         if (staff.email === inputEmail && staff.pass === inputPassword) {
           found = true;
-          alert(`✅ Welcome ${staff.name}! Your role is ${staff.role}`);
-          localStorage.setItem('isLoggedIn', 'true'); // 🔐 session flag
-          console.log("Saving role:", staff.role);
-          localStorage.setItem("userRole", staff.role);
-          localStorage.setItem("userFullName", staff.name);
-          window.location.href = "home.html";
-          // Save session, redirect, etc.
+
+          const now = new Date();
+          const hours = now.getHours(); // 0–23
+          const role = staff.role;
+
+          // ✅ If Staff, restrict login to 8 AM – 7 PM
+          if (role === "Staff" && (hours < 8 || hours >= 19)) {
+            // Option 1: Alert
+            showLoginRequestModal(staff);
+
+            // Option 2: Modal — if using one, call showLoginTimeModal();
+            return; // Stop login
+          }
+
+          // ✅ Save session
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userRole', role);
+          localStorage.setItem('userFullName', staff.name);
+
+          // ✅ Log the login
+          const loginLogRef = push(ref(database, `loginLogs/${staff.name}`));
+          set(loginLogRef, {
+            userName: staff.name,
+            email: staff.email,
+            role: role,
+            timestamp: now.toISOString()
+          });
+
+          // ✅ Alert and redirect
+          alert(`✅ Welcome ${staff.name}! Your role is ${role}`);
+          window.location.href = 'home.html';
         }
       });
 
@@ -111,6 +216,78 @@ Hosting URL: https://lebistro-9be16.web.appn public
       onlyOnce: true
     });
   });
+
+  function submitLoginRequest() {
+    const staff = window.requestingStaff;
+    const requestRef = push(ref(database, 'loginRequests'));
+
+    const requestData = {
+      userName: staff.name,
+      email: staff.email,
+      role: staff.role,
+      timestamp: new Date().toISOString(),
+      status: 'pending'
+    };
+
+    set(requestRef, requestData)
+      .then(() => {
+        // ✅ Store data in localStorage
+        localStorage.setItem('loginRequestStatus', 'pending');
+        localStorage.setItem('loginRequestKey', requestRef.key);
+        localStorage.setItem('userRole', staff.role);
+        localStorage.setItem('userFullName', staff.name);
+        localStorage.setItem('userEmail', staff.email);
+
+        closeLoginModal();
+        showLoadingModal("Please wait while admin confirms your login request...");
+
+        // ✅ Start listening for changes
+        listenToLoginRequestStatus(requestRef.key);
+      })
+      .catch((error) => {
+        alert("❌ Failed to send request.");
+        console.error(error);
+      });
+  }
+  function listenToLoginRequestStatus(requestKey) {
+    const requestRef = ref(database, `loginRequests/${requestKey}`);
+
+    onValue(requestRef, (snapshot) => {
+      const data = snapshot.val();
+
+      // ✅ Handle deleted request
+      if (!data) {
+        updateLoadingModal("⚠️ Login request not found. It may have been removed.");
+        localStorage.removeItem('loginRequestStatus');
+        localStorage.removeItem('loginRequestKey');
+
+        setTimeout(() => {
+          hideLoadingModal();
+        }, 3000);
+        return;
+      }
+
+      if (data.status === 'accepted') {
+        updateLoadingModal("✅ Request accepted! Redirecting...");
+        localStorage.removeItem('loginRequestStatus');
+        localStorage.removeItem('loginRequestKey');
+        setTimeout(() => {
+          localStorage.setItem('isLoggedIn', 'true');
+          window.location.href = "home.html";
+        }, 2000);
+      } else if (data.status === 'rejected') {
+        updateLoadingModal("❌ Your login request was rejected by admin.");
+        localStorage.clear();
+        setTimeout(hideLoadingModal, 3000);
+      }
+    });
+  }
+
+
+  window.submitLoginRequest = submitLoginRequest;
+  window.listenToLoginRequestStatus = listenToLoginRequestStatus;
+
+
 </script>
 
 </html>
